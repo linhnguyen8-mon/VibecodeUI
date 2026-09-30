@@ -1,0 +1,22 @@
+.typography-editor { padding:16px 20px 20px; color:#172033; }
+.type-family-row { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:68px; border-bottom:1px solid #e2e8f0; }
+.type-family-row label { display:flex; flex-direction:column; gap:3px; min-width:0; }
+.type-family-row strong, .type-control-row { font-size:12px; font-weight:500; }
+.type-family-row small { color:#93a0b1; font-size:10px; line-height:1.3; }
+.type-family-row select { width:130px; }
+.typography-editor select, .typography-editor input { min-width:0; height:29px; padding:4px 6px; border:1px solid #cbd5e1; border-radius:6px; background:#fff; color:#172033; font:500 11px "Plus Jakarta Sans",sans-serif; }
+.typography-editor input:focus, .typography-editor select:focus { outline:2px solid #2457c5; outline-offset:1px; }
+.type-section { padding:24px 0; border-bottom:1px solid #e2e8f0; }
+.type-section:last-child { border-bottom:0; padding-bottom:0; }
+.type-section h3 { margin:0 0 16px; color:#8290a4; font:600 10px/1.4 ui-monospace,monospace; text-transform:uppercase; }
+.type-control-row { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:42px; }
+.type-control-row select { width:148px; }
+.type-number { display:flex; align-items:center; gap:4px; color:#8290a4; font-size:10px; }
+.type-number input { width:52px; text-align:right; }
+.type-role-head, .type-role-row { display:grid; grid-template-columns:minmax(72px,1fr) 49px 49px 59px; align-items:center; gap:7px; }
+.type-role-head { margin-bottom:4px; color:#a0aaba; font:500 9px ui-monospace,monospace; text-transform:uppercase; }
+.type-role-row { min-height:36px; border-top:1px solid #edf0f5; }
+.type-role-row strong { font-size:11px; font-weight:500; }
+.type-role-row input, .type-role-row select { width:100%; height:25px; padding:3px; text-align:center; font-size:10px; }
+.type-role-row input::-webkit-inner-spin-button { appearance:none; }
+@media (max-width:700px) { .design-editor-tabs { margin:16px 14px 0; } .typography-editor { padding:12px 14px 16px; } }
