@@ -143,3 +143,24 @@
   .inspector-content { padding:22px 18px 30px; }
 }
 @media (max-width:380px) { .skills-filters { grid-template-columns:1fr; } }
+.workspace-notice { padding:9px 30px; color:#805b14; background:#fff6df; border-bottom:1px solid #edd9a5; font-size:12px; }
+.context-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 30px; border-bottom:1px solid #e2e6eb; background:#fff; }
+.context-toggle { display:flex; align-items:center; gap:10px; padding:0; border:0; color:#344054; background:transparent; font-size:12px; font-weight:650; cursor:pointer; }
+.context-toggle span { color:#7a8493; font-size:10px; font-weight:400; }
+.project-context-panel { padding:14px 30px 16px; border-bottom:1px solid #e2e6eb; background:#fff; }
+.project-context-heading { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; color:#344054; font-size:12px; }
+.project-context-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.project-context-grid > label { display:grid; align-content:start; gap:5px; color:#596579; font-size:10px; }
+.project-context-grid input,.project-context-grid textarea { width:100%; min-height:32px; padding:7px 9px; border:1px solid #dce1e7; border-radius:4px; color:#263347; background:#fff; font:inherit; font-size:11px; }
+.project-context-grid textarea { min-height:54px; resize:vertical; }
+.project-platform-options { display:flex; flex-wrap:wrap; gap:5px 9px; }
+.project-platform-options label { display:flex; align-items:center; gap:4px; }
+.project-platform-options input { width:auto; min-height:0; accent-color:#4778c7; }
+@media (max-width: 900px) { .project-context-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width: 560px) { .context-toolbar,.project-context-panel { padding-left:16px; padding-right:16px; } .project-context-grid { grid-template-columns:1fr; } .workspace-notice { padding-left:16px; } }
+/* Keyboard focus remains visible across the skill workspace controls. */
+.skills-workspace :is(button,select,input,textarea,summary):focus-visible { outline:2px solid #255fca; outline-offset:2px; }
+.skills-workspace .workspace-notice.error { color:#8e3030; background:#fff0f0; border-color:#edcaca; }
+.project-context-field { display:grid; align-content:start; gap:5px; color:#596579; font-size:10px; }
+.project-context-field > span { font-weight:600; }
+.project-context-grid > label:focus-within { color:#344054; }

@@ -21,6 +21,7 @@ import type { AnimationPrompt, ButtonSize, ComponentPrompt, DesignSystem, Previe
 import { getButtonSize } from "./lib/button";
 import { tokenValue } from "./lib/tokens";
 import { SkillWorkspace } from "./SkillWorkspace";
+import { defaultDesignQualityState, loadDesignQualityState, saveDesignQualityState, type DesignQualityState } from "./persistence";
 import { gradientPresetStyle } from "./lib/gradient";
 import { getBadge } from "./lib/badge";
 import { getSpacingAliases, getSpacingScale } from "./lib/spacing";
@@ -39,11 +40,26 @@ const data = loadMockLibraryData();
 
 export function App() {
   const [view, setView] = useState<View>("design-system");
-  const [query, setQuery] = useState("");
+  const [loadedState] = useState(loadDesignQualityState);
+  const [qualityState, setQualityState] = useState<DesignQualityState>(loadedState.state);
+  const [storageWarning, setStorageWarning] = useState(loadedState.warning ?? "");
+  const [query, setQuery] = useState(loadedState.state.filters.query);
   const [toast, setToast] = useState<Toast>(null);
   const [selectedDsId, setSelectedDsId] = useState("ds-fintech-calm");
   const [selectedComponentId, setSelectedComponentId] = useState("component-primary-button");
   const [selectedAnimationId, setSelectedAnimationId] = useState("animation-dialog-enter");
+
+  useEffect(() => {
+    try {
+      saveDesignQualityState(qualityState);
+      setStorageWarning("");
+    } catch {
+      setStorageWarning("Browser storage is unavailable. Changes will only last for this session.");
+    }
+  }, [qualityState]);
+  useEffect(() => {
+    setQualityState((current) => current.filters.query === query ? current : { ...current, filters: { ...current.filters, query } });
+  }, [query]);
 
   const counts = {
     "design-system": data.designSystems.length,
@@ -105,7 +121,7 @@ export function App() {
             onToast={setToast}
           />
         )}
-        {view === "principle" && <SkillWorkspace query={query} onToast={setToast} />}
+        {view === "principle" && <SkillWorkspace query={query} onQueryChange={setQuery} state={qualityState} onStateChange={setQualityState} storageWarning={storageWarning} onToast={setToast} />}
       </main>
 
       {toast && <div className={`toast ${toast.tone}`}>{toast.text}</div>}

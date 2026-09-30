@@ -5,23 +5,19 @@ import { buildAuditPrompt, buildCriteriaOnly } from "./promptBuilder";
 import { auditSets } from "./auditSets";
 import { buildCombinedAuditPrompt } from "./combinedPromptBuilder";
 import type { ProjectContext } from "./projectContext";
+import { defaultDesignQualityState, type AuditSetConfig, type DesignQualityState } from "./persistence";
 import "./skills.css";
 
 type ToastMessage = { tone: "success" | "error" | "info"; text: string };
+type Props = { query: string; onQueryChange: (value: string) => void; state: DesignQualityState; onStateChange: (update: (current: DesignQualityState) => DesignQualityState) => void; storageWarning: string; onToast: (toast: ToastMessage) => void };
 
-export function SkillWorkspace({ query, onToast }: { query: string; onToast: (toast: ToastMessage) => void }) {
+export function SkillWorkspace({ query, onQueryChange, state, onStateChange, storageWarning, onToast }: Props) {
+  const { filters } = state;
+  const [contextOpen, setContextOpen] = useState(false);
   const groups = [...new Set(skills.map((skill) => skill.group))];
   const stages = [...new Set(skills.flatMap((skill) => skill.stages))];
   const scopes = [...new Set(skills.flatMap((skill) => skill.scopes))];
   const problems = [...new Set(skills.flatMap((skill) => skill.problems))];
-  const [group, setGroup] = useState("All groups");
-  const [stage, setStage] = useState("All stages");
-  const [scope, setScope] = useState("All scopes");
-  const [selectedProblems, setSelectedProblems] = useState<string[]>([]);
-  const [quickFilter, setQuickFilter] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState("visual-hierarchy");
-  const [inputValues, setInputValues] = useState<Record<string, Record<string, string | string[]>>>({});
-  const [includedCriteria, setIncludedCriteria] = useState<Record<string, Record<string, boolean>>>({});
   const quickFilters: Record<string, string[]> = {
     "Looks generic": ["context-specificity", "ai-visual-slop", "cardification-detector"],
     "Hard to understand": ["purpose-validator", "information-architecture", "cognitive-load"],
@@ -33,63 +29,86 @@ export function SkillWorkspace({ query, onToast }: { query: string; onToast: (to
     "UI inconsistent": ["design-system-compliance", "state-coverage"],
     "Doesn't feel trustworthy": ["purpose-validator", "context-specificity", "error-recovery", "accessibility-core"],
   };
+  const patchFilters = (patch: Partial<DesignQualityState["filters"]>) => onStateChange((current) => ({ ...current, filters: { ...current.filters, ...patch } }));
   const visible = useMemo(() => skills.filter((skill) => {
     const matchesQuery = `${skill.name} ${skill.shortDescription} ${skill.group} ${skill.detects.join(" ")}`.toLowerCase().includes(query.toLowerCase());
-    const matchesProblems = selectedProblems.length === 0 || selectedProblems.some((problem) => skill.problems.includes(problem));
-    return matchesQuery && matchesProblems && (group === "All groups" || skill.group === group) && (stage === "All stages" || skill.stages.includes(stage)) && (scope === "All scopes" || skill.scopes.includes(scope));
-  }), [query, group, stage, scope, selectedProblems]);
-  const relevantIds = quickFilter ? quickFilters[quickFilter] : [];
-  const quickMatches = quickFilter ? visible.filter((skill) => relevantIds.includes(skill.id)) : [];
-  const selected = visible.find((skill) => skill.id === selectedId) ?? quickMatches[0] ?? visible[0];
+    const matchesProblems = filters.selectedProblems.length === 0 || filters.selectedProblems.some((problem) => skill.problems.includes(problem));
+    return matchesQuery && matchesProblems && (filters.group === "All groups" || skill.group === filters.group) && (filters.stage === "All stages" || skill.stages.includes(filters.stage)) && (filters.scope === "All scopes" || skill.scopes.includes(filters.scope));
+  }), [query, filters]);
+  const relevantIds = filters.quickFilter ? quickFilters[filters.quickFilter] : [];
+  const quickMatches = filters.quickFilter ? visible.filter((skill) => relevantIds.includes(skill.id)) : [];
+  const selected = visible.find((skill) => skill.id === state.selectedSkillId) ?? quickMatches[0] ?? visible[0];
+  const contextCount = Object.values(state.projectContext).filter((value) => Array.isArray(value) ? value.length > 0 : !!value?.trim()).length;
+  const registryIssues = skills.flatMap((skill, index) => {
+    const issues: string[] = [];
+    if (!skill.id?.trim() || !skill.name?.trim() || !skill.group?.trim()) issues.push(`Skill registry entry ${index + 1} is missing an ID, name, or group.`);
+    if (!Array.isArray(skill.criteria) || !Array.isArray(skill.scopes) || !Array.isArray(skill.stages)) issues.push(`${skill.name || `Entry ${index + 1}`} has incomplete registry data.`);
+    return issues;
+  });
+  const setContext = (projectContext: ProjectContext) => onStateChange((current) => ({ ...current, projectContext }));
+  const resetAll = () => {
+    if (!window.confirm("Reset all saved Design Quality Skills data? This clears project context, skill inputs, filters, and audit set choices.")) return;
+    onStateChange(() => defaultDesignQualityState);
+    onQueryChange("");
+    onToast({ tone: "info", text: "Workspace reset" });
+  };
   return <section className="skills-workspace" aria-label="Design quality skills">
+    {storageWarning && <div className="workspace-notice" role="status">{storageWarning}</div>}
+    {registryIssues.length > 0 && <div className="workspace-notice error" role="alert">Some skill registry entries are invalid: {registryIssues.join(" ")}</div>}
     <div className="skills-toolbar">
       <div><p className="skills-eyebrow">DESIGN PRINCIPLES</p><h1>Design Quality Skills</h1><p className="skills-subtitle">A focused workspace for reviewing product experience quality.</p></div>
       <div className="skills-filters">
-        <label><span>Group</span><select value={group} onChange={(e) => setGroup(e.target.value)}><option>All groups</option>{groups.map((item) => <option key={item}>{item}</option>)}</select></label>
-        <label><span>Stage</span><select value={stage} onChange={(e) => setStage(e.target.value)}><option>All stages</option>{stages.map((item) => <option key={item}>{item}</option>)}</select></label>
-        <label><span>Scope</span><select value={scope} onChange={(e) => setScope(e.target.value)}><option>All scopes</option>{scopes.map((item) => <option key={item}>{item}</option>)}</select></label>
-        <details className="problem-filter"><summary>Problem{selectedProblems.length > 0 && <span className="filter-badge">{selectedProblems.length}</span>}</summary><div className="problem-menu">{problems.map((problem) => <label key={problem}><input type="checkbox" aria-label={`Filter problem: ${problem}`} checked={selectedProblems.includes(problem)} onChange={() => setSelectedProblems((current) => current.includes(problem) ? current.filter((item) => item !== problem) : [...current, problem])} /><span>{problem}</span></label>)}</div></details>
+        <label><span>Group</span><select value={filters.group} onChange={(e) => patchFilters({ group: e.target.value })}><option>All groups</option>{groups.map((item) => <option key={item}>{item}</option>)}</select></label>
+        <label><span>Stage</span><select value={filters.stage} onChange={(e) => patchFilters({ stage: e.target.value })}><option>All stages</option>{stages.map((item) => <option key={item}>{item}</option>)}</select></label>
+        <label><span>Scope</span><select value={filters.scope} onChange={(e) => patchFilters({ scope: e.target.value })}><option>All scopes</option>{scopes.map((item) => <option key={item}>{item}</option>)}</select></label>
+        <details className="problem-filter"><summary>Problem{filters.selectedProblems.length > 0 && <span className="filter-badge">{filters.selectedProblems.length}</span>}</summary><div className="problem-menu">{problems.map((problem) => <label key={problem}><input type="checkbox" aria-label={`Filter problem: ${problem}`} checked={filters.selectedProblems.includes(problem)} onChange={() => patchFilters({ selectedProblems: filters.selectedProblems.includes(problem) ? filters.selectedProblems.filter((item) => item !== problem) : [...filters.selectedProblems, problem] })} /><span>{problem}</span></label>)}</div></details>
       </div>
     </div>
-    <div className="quick-filter-bar"><div className="quick-filter-heading"><strong>What feels wrong?</strong><span>Quickly focus the skills that can help.</span></div><div className="quick-filter-options">{Object.keys(quickFilters).map((item) => <button key={item} className={quickFilter === item ? "active" : ""} aria-pressed={quickFilter === item} onClick={() => { const next = quickFilter === item ? null : item; setQuickFilter(next); if (next) setSelectedId(quickFilters[next][0]); }}>{item}</button>)}</div>{quickFilter && <span className="quick-match-count">{quickMatches.length} matching skills</span>}</div>
-    <AuditSetWorkspace inputValues={inputValues} includedCriteria={includedCriteria} onToast={onToast} />
+    <div className="context-toolbar"><button className="context-toggle" type="button" aria-expanded={contextOpen} onClick={() => setContextOpen((open) => !open)}>Project Context <span>{contextCount}/11 fields provided</span></button><button type="button" className="text-action" onClick={resetAll}>Reset all</button></div>
+    {contextOpen && <ProjectContextPanel value={state.projectContext} onChange={setContext} onReset={() => setContext({})} />}
+    <div className="quick-filter-bar"><div className="quick-filter-heading"><strong>What feels wrong?</strong><span>Quickly focus the skills that can help.</span></div><div className="quick-filter-options">{Object.keys(quickFilters).map((item) => <button key={item} className={filters.quickFilter === item ? "active" : ""} aria-pressed={filters.quickFilter === item} onClick={() => { const next = filters.quickFilter === item ? null : item; patchFilters({ quickFilter: next }); if (next) onStateChange((current) => ({ ...current, selectedSkillId: quickFilters[next][0] })); }}>{item}</button>)}</div>{filters.quickFilter && <span className="quick-match-count">{quickMatches.length} matching skills</span>}</div>
+    <AuditSetWorkspace inputValues={state.skillInputs} includedCriteria={state.selectedCriteria} projectContext={state.projectContext} config={state.auditSetConfig} onConfigChange={(auditSetConfig) => onStateChange((current) => ({ ...current, auditSetConfig }))} onToast={onToast} />
     <div className="skills-split">
       <div className="skills-browser" aria-label="Skill browser">
-        <div className="skills-results"><strong>{visible.length} skills</strong><span>Choose a skill to inspect its criteria</span></div>
-        {visible.length ? <div className="skills-grid">{visible.map((skill) => <SkillCard key={skill.id} skill={skill} selected={skill.id === selected?.id} relevant={!!quickFilter && relevantIds.includes(skill.id)} dimmed={!!quickFilter && !relevantIds.includes(skill.id)} onClick={() => setSelectedId(skill.id)} />)}</div> : <div className="skills-empty">No skills match these filters. Try another search or filter.</div>}
+        <div className="skills-results" aria-live="polite"><strong>{visible.length} skills</strong><span>Choose a skill to inspect its criteria</span>{(query || filters.group !== "All groups" || filters.stage !== "All stages" || filters.scope !== "All scopes" || filters.selectedProblems.length || filters.quickFilter) ? <button className="text-action" type="button" onClick={() => { onQueryChange(""); patchFilters({ group: "All groups", stage: "All stages", scope: "All scopes", selectedProblems: [], quickFilter: null }); }}>Clear filters</button> : null}</div>
+        {visible.length ? <div className="skills-grid">{visible.map((skill) => <SkillCard key={skill.id} skill={skill} selected={skill.id === selected?.id} relevant={!!filters.quickFilter && relevantIds.includes(skill.id)} dimmed={!!filters.quickFilter && !relevantIds.includes(skill.id)} onClick={() => onStateChange((current) => ({ ...current, selectedSkillId: skill.id }))} />)}</div> : <div className="skills-empty">No skills match these filters. Try another search or filter.</div>}
       </div>
       <aside className="skill-inspector" aria-label="Skill workspace">
-        {selected ? <Inspector key={selected.id} skill={selected} values={inputValues[selected.id] ?? {}} onInputChange={(fieldId, value) => setInputValues((current) => ({ ...current, [selected.id]: { ...current[selected.id], [fieldId]: value } }))} onResetInputs={() => setInputValues((current) => ({ ...current, [selected.id]: {} }))} includedCriteria={includedCriteria[selected.id] ?? {}} onCriterionToggle={(title) => setIncludedCriteria((current) => ({ ...current, [selected.id]: { ...current[selected.id], [title]: !(current[selected.id]?.[title] ?? true) } }))} onToast={onToast} /> : <div className="inspector-empty">Select a skill to inspect its criteria.</div>}
+        {selected ? <Inspector key={selected.id} skill={selected} values={state.skillInputs[selected.id] ?? {}} projectContext={state.projectContext} onInputChange={(fieldId, value) => onStateChange((current) => ({ ...current, skillInputs: { ...current.skillInputs, [selected.id]: { ...current.skillInputs[selected.id], [fieldId]: value } } }))} onResetInputs={() => onStateChange((current) => ({ ...current, skillInputs: { ...current.skillInputs, [selected.id]: {} } }))} includedCriteria={state.selectedCriteria[selected.id] ?? {}} onCriterionToggle={(title) => onStateChange((current) => ({ ...current, selectedCriteria: { ...current.selectedCriteria, [selected.id]: { ...current.selectedCriteria[selected.id], [title]: !(current.selectedCriteria[selected.id]?.[title] ?? true) } } }))} onToast={onToast} /> : <div className="inspector-empty">Select a skill to inspect its criteria.</div>}
       </aside>
     </div>
   </section>;
 }
 
-function AuditSetWorkspace({ inputValues, includedCriteria, onToast }: { inputValues: Record<string, Record<string, string | string[]>>; includedCriteria: Record<string, Record<string, boolean>>; onToast: (toast: ToastMessage) => void }) {
-  const [activeSetId, setActiveSetId] = useState<string | null>(null);
-  const [skillOverrides, setSkillOverrides] = useState<Record<string, string[]>>({});
+function AuditSetWorkspace({ inputValues, includedCriteria, projectContext, config, onConfigChange, onToast }: { inputValues: DesignQualityState["skillInputs"]; includedCriteria: DesignQualityState["selectedCriteria"]; projectContext: ProjectContext; config: AuditSetConfig; onConfigChange: (config: AuditSetConfig) => void; onToast: (toast: ToastMessage) => void }) {
   const [showPreview, setShowPreview] = useState(false);
+  const activeSetId = config.activeSetId;
   const activeSet = auditSets.find((set) => set.id === activeSetId);
-  const skillIds = activeSet ? skillOverrides[activeSet.id] ?? activeSet.skillIds : [];
+  const skillIds = activeSet ? config.skillsBySet[activeSet.id] ?? activeSet.skillIds : [];
   const selectedSkills = skillIds.map((id) => skills.find((skill) => skill.id === id)).filter((skill) => skill !== undefined);
-  const prompt = activeSet && showPreview ? buildCombinedAuditPrompt(selectedSkills, inputValues, includedCriteria, {}) : null;
-
+  const prompt = activeSet && showPreview ? buildCombinedAuditPrompt(selectedSkills, inputValues, includedCriteria, projectContext) : null;
   const toggleSkill = (skillId: string) => {
     if (!activeSet) return;
-    setSkillOverrides((current) => ({
-      ...current,
-      [activeSet.id]: skillIds.includes(skillId) ? skillIds.filter((id) => id !== skillId) : [...skillIds, skillId],
-    }));
+    onConfigChange({ ...config, skillsBySet: { ...config.skillsBySet, [activeSet.id]: skillIds.includes(skillId) ? skillIds.filter((id) => id !== skillId) : [...skillIds, skillId] } });
     setShowPreview(false);
   };
-
-  return <section className="audit-sets-workspace" aria-label="Audit sets">
-    <div className="audit-sets-heading"><div><h2>Audit Sets</h2><p>Combine focused skill reviews into one exportable prompt.</p></div></div>
-    <div className="audit-set-options">{auditSets.map((set) => <button key={set.id} className={`audit-set-option${activeSetId === set.id ? " active" : ""}`} aria-pressed={activeSetId === set.id} onClick={() => { setActiveSetId(set.id); setShowPreview(false); }}><strong>{set.name}</strong><span>{set.description}</span></button>)}</div>
-    {activeSet && <div className="audit-set-config"><div className="audit-set-config-heading"><div><strong>{activeSet.name}</strong><span>{selectedSkills.length} of {skills.filter((skill) => activeSet.skillIds.includes(skill.id)).length} selected</span></div><p>Choose which skills to include.</p></div><div className="audit-set-skill-list">{activeSet.skillIds.map((id) => { const skill = skills.find((item) => item.id === id); return skill ? <label key={id}><input type="checkbox" checked={skillIds.includes(id)} onChange={() => toggleSkill(id)} /><span>{skill.name}</span></label> : null; })}</div><button type="button" className="generate-combined-button" disabled={selectedSkills.length === 0} onClick={() => setShowPreview(true)}>Generate Combined Prompt</button>
-      {prompt && <div className="combined-prompt-result"><details><summary>Preview combined prompt <span>{prompt.length.toLocaleString()} characters</span></summary><pre>{prompt}</pre></details><button type="button" className="text-action" onClick={() => void copyText(prompt, "prompt", () => undefined, onToast)}>Copy Combined Prompt</button></div>}
-    </div>}
+  return <section className="audit-sets-workspace" aria-label="Audit sets"><div className="audit-sets-heading"><div><h2>Audit Sets</h2><p>Combine focused skill reviews into one exportable prompt.</p></div></div>
+    <div className="audit-set-options">{auditSets.map((set) => <button key={set.id} className={`audit-set-option${activeSetId === set.id ? " active" : ""}`} aria-pressed={activeSetId === set.id} onClick={() => { onConfigChange({ ...config, activeSetId: set.id }); setShowPreview(false); }}><strong>{set.name}</strong><span>{set.description}</span></button>)}</div>
+    {activeSet && <div className="audit-set-config"><div className="audit-set-config-heading"><div><strong>{activeSet.name}</strong><span>{selectedSkills.length} of {activeSet.skillIds.length} selected</span></div><p>Choose which skills to include.</p></div><div className="audit-set-skill-list">{activeSet.skillIds.map((id) => { const skill = skills.find((item) => item.id === id); return skill ? <label key={id}><input type="checkbox" checked={skillIds.includes(id)} onChange={() => toggleSkill(id)} /><span>{skill.name}</span></label> : null; })}</div><button type="button" className="generate-combined-button" disabled={selectedSkills.length === 0} onClick={() => setShowPreview(true)}>Generate Combined Prompt</button>
+      {prompt && <div className="combined-prompt-result"><details><summary>Preview combined prompt <span>{prompt.length.toLocaleString()} characters</span></summary><pre>{prompt}</pre></details><button type="button" className="text-action" onClick={() => void copyText(prompt, "prompt", () => undefined, onToast)}>Copy Combined Prompt</button></div>}</div>}
   </section>;
+}
+
+function ProjectContextPanel({ value, onChange, onReset }: { value: ProjectContext; onChange: (value: ProjectContext) => void; onReset: () => void }) {
+  const fields: { key: keyof ProjectContext; label: string; multiline?: boolean; choices?: string[] }[] = [
+    { key: "productName", label: "Product name" }, { key: "productCategory", label: "Product category" }, { key: "industryDomain", label: "Industry / domain" },
+    { key: "targetUsers", label: "Target users", multiline: true }, { key: "primaryUserGoal", label: "Primary user goal", multiline: true }, { key: "primaryBusinessGoal", label: "Primary business goal", multiline: true },
+    { key: "platform", label: "Platform", choices: ["Web", "iOS", "Android", "Desktop", "Responsive"] }, { key: "userExpertise", label: "User expertise" },
+    { key: "designSystem", label: "Design system" }, { key: "technicalConstraints", label: "Technical constraints", multiline: true }, { key: "additionalContext", label: "Additional context", multiline: true },
+  ];
+  return <section className="project-context-panel" aria-label="Project context"><div className="project-context-heading"><strong>Project context</strong><button className="text-action" type="button" onClick={onReset}>Reset context</button></div><div className="project-context-grid">{fields.map((field) => field.choices
+    ? <div className="project-context-field" key={field.key}><span>{field.label}</span><div className="project-platform-options">{field.choices.map((choice) => <label key={choice}><input type="checkbox" aria-label={`${field.label}: ${choice}`} checked={Array.isArray(value.platform) && value.platform.includes(choice)} onChange={() => { const items = Array.isArray(value.platform) ? value.platform : []; onChange({ ...value, platform: items.includes(choice) ? items.filter((item) => item !== choice) : [...items, choice] }); }} />{choice}</label>)}</div></div>
+    : <label key={field.key}><span>{field.label}</span>{field.multiline ? <textarea aria-label={field.label} value={String(value[field.key] ?? "")} onChange={(event) => onChange({ ...value, [field.key]: event.target.value })} /> : <input aria-label={field.label} value={String(value[field.key] ?? "")} onChange={(event) => onChange({ ...value, [field.key]: event.target.value })} />}</label>)}</div></section>;
 }
 
 function SkillCard({ skill, selected, relevant, dimmed, onClick }: { skill: Skill; selected: boolean; relevant: boolean; dimmed: boolean; onClick: () => void }) {
@@ -100,9 +119,8 @@ function SkillCard({ skill, selected, relevant, dimmed, onClick }: { skill: Skil
   </button>;
 }
 
-function Inspector({ skill, values, onInputChange, onResetInputs, includedCriteria, onCriterionToggle, onToast }: { skill: Skill; values: Record<string, string | string[]>; onInputChange: (fieldId: string, value: string | string[]) => void; onResetInputs: () => void; includedCriteria: Record<string, boolean>; onCriterionToggle: (title: string) => void; onToast: (toast: ToastMessage) => void }) {
+function Inspector({ skill, values, projectContext, onInputChange, onResetInputs, includedCriteria, onCriterionToggle, onToast }: { skill: Skill; values: Record<string, string | string[]>; projectContext: ProjectContext; onInputChange: (fieldId: string, value: string | string[]) => void; onResetInputs: () => void; includedCriteria: Record<string, boolean>; onCriterionToggle: (title: string) => void; onToast: (toast: ToastMessage) => void }) {
   const [copied, setCopied] = useState<"prompt" | "criteria" | null>(null);
-  const projectContext: ProjectContext = {};
   const prompt = buildAuditPrompt(skill, values, includedCriteria, projectContext);
   const criteriaOnly = buildCriteriaOnly(skill, includedCriteria);
   const linkedPrinciples = skill.principleIds.map((id) => principles.find((item) => item.id === id)).filter((item) => item !== undefined);
@@ -124,31 +142,17 @@ function Inspector({ skill, values, onInputChange, onResetInputs, includedCriter
 }
 
 async function copyText(value: string, kind: "prompt" | "criteria", setCopied: (kind: "prompt" | "criteria" | null) => void, onToast: (toast: ToastMessage) => void) {
-  try {
-    await navigator.clipboard.writeText(value);
-    setCopied(kind);
-    onToast({ tone: "success", text: kind === "prompt" ? "Audit prompt copied" : "Criteria copied" });
-  } catch {
-    setCopied(null);
-    onToast({ tone: "error", text: "Could not copy. Check browser clipboard access and try again." });
-  }
+  try { await navigator.clipboard.writeText(value); setCopied(kind); onToast({ tone: "success", text: kind === "prompt" ? "Audit prompt copied" : "Criteria copied" }); }
+  catch { setCopied(null); onToast({ tone: "error", text: "Could not copy. Check browser clipboard access and try again." }); }
 }
 
 function SkillContextField({ field, value, onChange }: { field: Skill["inputs"][number]; value: string | string[]; onChange: (value: string | string[]) => void }) {
   const controlId = `skill-${field.id}`;
   const label = <span className="context-field-label">{field.label}{field.required && <em>Required</em>}</span>;
   if (field.type === "multiselect") return <fieldset className="skill-context-field"><legend>{label}</legend><div className="multi-input-options">{(field.options ?? []).map((option) => <label key={option}><input type="checkbox" checked={Array.isArray(value) && value.includes(option)} onChange={() => { const current = Array.isArray(value) ? value : []; onChange(current.includes(option) ? current.filter((item) => item !== option) : [...current, option]); }} />{option}</label>)}</div>{field.helperText && <small>{field.helperText}</small>}</fieldset>;
-  return <label className="skill-context-field" htmlFor={controlId}>
-    {label}
-    {field.type === "textarea" ? <textarea id={controlId} placeholder={field.placeholder} value={Array.isArray(value) ? value.join("\n") : value} onChange={(event) => onChange(event.target.value)} />
-      : field.type === "select" ? <select id={controlId} value={Array.isArray(value) ? value[0] ?? "" : value} onChange={(event) => onChange(event.target.value)}><option value="">Choose one</option>{(field.options ?? []).map((option) => <option key={option}>{option}</option>)}</select>
-      : <input id={controlId} type="text" placeholder={field.placeholder} value={Array.isArray(value) ? value.join(", ") : value} onChange={(event) => onChange(event.target.value)} />}
-    {field.helperText && <small>{field.helperText}</small>}
-  </label>;
+  return <label className="skill-context-field" htmlFor={controlId}>{label}{field.type === "textarea" ? <textarea id={controlId} placeholder={field.placeholder} value={Array.isArray(value) ? value.join("\n") : value} onChange={(event) => onChange(event.target.value)} /> : field.type === "select" ? <select id={controlId} value={Array.isArray(value) ? value[0] ?? "" : value} onChange={(event) => onChange(event.target.value)}><option value="">Choose one</option>{(field.options ?? []).map((option) => <option key={option}>{option}</option>)}</select> : <input id={controlId} type="text" placeholder={field.placeholder} value={Array.isArray(value) ? value.join(", ") : value} onChange={(event) => onChange(event.target.value)} />}{field.helperText && <small>{field.helperText}</small>}</label>;
 }
 
 function InspectorSection({ title, children, collapsible = false }: { title: string; children: React.ReactNode; collapsible?: boolean }) {
-  return collapsible
-    ? <details className="inspector-section inspector-section-collapsible"><summary>{title}</summary>{children}</details>
-    : <section className="inspector-section"><h3>{title}</h3>{children}</section>;
+  return collapsible ? <details className="inspector-section inspector-section-collapsible"><summary>{title}</summary>{children}</details> : <section className="inspector-section"><h3>{title}</h3>{children}</section>;
 }
