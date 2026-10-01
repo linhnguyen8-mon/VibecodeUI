@@ -1,0 +1,22 @@
+import { expect, it } from 'vitest';
+import { contentSwapTokens } from './contentSwap';
+import { motionPresets } from './presets';
+import { motionConfig } from './config';
+import { generateMotionPrompt } from './prompt';
+it('keeps replacement timing ordered and shares edited tokens with the prompt', () => {
+  const preset = motionPresets.find(p => p.id === 'staggered-content-swap')!;
+  expect(preset.defaultParameters.duration).toBe(400);
+  const parameters = { ...preset.defaultParameters, duration: 600, stagger: 100, distance: 16 };
+  const t = contentSwapTokens(parameters);
+  expect(t.tagStart).toBe(t.press);
+  expect(t.headlineStart).toBeGreaterThan(t.tagStart);
+  expect(t.descriptionStart).toBeGreaterThan(t.headlineStart + 5 * t.stagger);
+  expect(t.total).toBe(t.descriptionStart + t.duration);
+  const config = motionConfig(preset, parameters);
+  expect(config.sequence).toBeUndefined();
+  const prompt = generateMotionPrompt(preset, config);
+  expect(prompt).toContain('600ms');
+  expect(prompt).toContain('100ms');
+  expect(prompt).toContain('16px');
+  expect(prompt).toContain('never replace it');
+});

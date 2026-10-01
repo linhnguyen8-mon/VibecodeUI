@@ -9,7 +9,7 @@ describe("library fixtures", () => {
 
   it("loads stable mock data with unique ids", () => {
     const ids = getAllResources(data).map((resource) => resource.id);
-    expect(data.designSystems).toHaveLength(3);
+    expect(data.designSystems).toHaveLength(4);
     expect(data.components).toHaveLength(8);
     expect(data.animations).toHaveLength(6);
     expect(new Set(ids).size).toBe(ids.length);

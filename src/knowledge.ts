@@ -3,11 +3,14 @@ export type Framework = { id: string; name: string; summary: string; useCases: s
 export type SlopSignal = { id: string; name: string; description: string; category: string; evidencePattern: string; rationale: string };
 
 export const principles: Principle[] = [
-  { id: "traceability", name: "Traceability", statement: "Every design decision maps to a user, task, system, or accessibility reason.", rationale: "A stated reason makes decisions reviewable and helps remove decoration without purpose.", appliesTo: ["Product", "Flow", "Screen", "Component", "Code"] },
+  { id: "traceability", name: "Traceability", statement: "Every element maps to a user, task, or system reason.", rationale: "A stated reason makes decisions reviewable and helps remove decoration without purpose.", appliesTo: ["Product", "Flow", "Screen", "Component", "Code"] },
   { id: "hierarchy-before-decoration", name: "Hierarchy before decoration", statement: "Establish priority and grouping before adding visual treatment.", rationale: "Clear information relationships should carry the interface before decorative effects do.", appliesTo: ["Screen", "Component"] },
   { id: "weakest-sufficient-separator", name: "Use the weakest sufficient separator", statement: "Choose the lightest visual boundary that makes a relationship clear.", rationale: "Unnecessary containers and borders fragment related information.", appliesTo: ["Screen", "Component"] },
   { id: "recognition-over-recall", name: "Recognition over recall", statement: "Make relevant options and context visible when users need them.", rationale: "Visible cues reduce memory burden and support confident choices.", appliesTo: ["Product", "Flow", "Screen", "Content"] },
   { id: "state-matched-feedback", name: "Feedback must match system state", statement: "Communicate outcomes that reflect what the system actually did.", rationale: "Accurate feedback lets users understand progress and choose a safe next action.", appliesTo: ["Flow", "Component", "Code"] },
+  { id: "no-dead-ends", name: "No dead ends", statement: "Every screen offers a way forward and a way back.", rationale: "Users must be able to continue or leave a flow safely.", appliesTo: ["Flow", "Screen", "Code"] },
+  { id: "truthful-content", name: "Truthful content", statement: "Show only real data, real claims, real states.", rationale: "Unsupported claims and premature success messages undermine trust.", appliesTo: ["Content", "Screen", "Flow"] },
+
 ];
 
 export const frameworks: Framework[] = [
@@ -45,3 +48,12 @@ export const slopSignals: SlopSignal[] = [
   { id: "component-proliferation", name: "Component proliferation", description: "New components duplicate existing patterns without a distinct need.", category: "System", evidencePattern: "Near-identical controls or surfaces implemented as separate variants.", rationale: "Duplication causes behavior and visual consistency to drift." },
   { id: "equal-prominence", name: "Equal prominence", description: "Primary and secondary content compete at the same visual level.", category: "Hierarchy", evidencePattern: "Several actions or blocks share similar size, contrast, and placement.", rationale: "Users cannot quickly identify the main task or next step." },
 ];
+
+slopSignals.push(
+  { id: "placeholder-leak", name: "Placeholder leak", description: "Placeholder content reaches the reviewed product.", category: "Content", evidencePattern: "Lorem ipsum, John Doe, Acme Inc, $99.99, TODO, stock images.", rationale: "Unmarked placeholders create misleading content." },
+  { id: "dead-cta", name: "Dead CTA", description: "A visible action has no working destination.", category: "Flow", evidencePattern: "Button or link has no action, points to #, or leads to a missing screen.", rationale: "Dead actions block task completion." },
+  { id: "happy-path-only", name: "Happy path only", description: "Alternate states and paths are missing.", category: "Flow", evidencePattern: "Missing error, empty, no-permission, edit, or delete paths.", rationale: "Real usage requires more than the successful path." },
+  { id: "terminology-drift", name: "Terminology drift", description: "One concept has multiple names.", category: "Content", evidencePattern: "At least two names for one concept in the same flow.", rationale: "Inconsistent terms create unnecessary uncertainty." },
+  { id: "premature-success", name: "Premature success", description: "Success is shown before confirmation.", category: "State", evidencePattern: "Saved or Done toast appears before the system confirms the operation.", rationale: "Feedback must reflect actual system state." },
+  { id: "emoji-decoration", name: "Emoji decoration", description: "Emoji add no useful meaning.", category: "Visual", evidencePattern: "Emoji in headings or labels without a semantic purpose.", rationale: "Decoration should support status, hierarchy, or action." },
+);

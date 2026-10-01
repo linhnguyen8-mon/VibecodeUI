@@ -1,0 +1,1421 @@
+[
+  {
+    "id": "heuristic-sweep",
+    "name": "Heuristic Sweep",
+    "shortDescription": "Quét nhanh 10 nguyên tắc, chỉ ra chỗ cần soi sâu",
+    "group": "Triage",
+    "scopes": [
+      "Product",
+      "Flow",
+      "Screen"
+    ],
+    "stages": [
+      "QA"
+    ],
+    "problems": [
+      "Usability",
+      "Consistency"
+    ],
+    "detects": [
+      "missing feedback",
+      "no exit",
+      "inconsistent naming",
+      "unclear errors"
+    ],
+    "whenToUse": "Chạy đầu tiên khi chưa biết lỗi nằm ở đâu. Output dùng để chọn skill deep-dive",
+    "inputs": [
+      {
+        "id": "target",
+        "label": "Flow / screens",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Checkout: Cart → Shipping → Payment → Success"
+      },
+      {
+        "id": "user-goal",
+        "label": "User & goal",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Returning buyer wants to reorder in < 1 min"
+      },
+      {
+        "id": "artifact",
+        "label": "Artifact",
+        "type": "text",
+        "placeholder": "Link, screenshots, or code path"
+      },
+      {
+        "id": "known-concern",
+        "label": "Known concern",
+        "type": "textarea",
+        "placeholder": "What to look at first?"
+      }
+    ],
+    "principleIds": [
+      "state-matched-feedback",
+      "recognition-over-recall"
+    ],
+    "criteria": [
+      {
+        "id": "heuristic-sweep.1",
+        "title": "System status",
+        "description": "Fail nếu: sau action không có thay đổi nhìn thấy, hoặc user không biết mình đang ở bước nào."
+      },
+      {
+        "id": "heuristic-sweep.2",
+        "title": "Real-world match",
+        "description": "Fail nếu: dùng thuật ngữ kỹ thuật/nội bộ thay vì từ user quen dùng."
+      },
+      {
+        "id": "heuristic-sweep.3",
+        "title": "User control",
+        "description": "Fail nếu: không có Back / Cancel / Undo ở step có thể làm sai."
+      },
+      {
+        "id": "heuristic-sweep.4",
+        "title": "Consistency",
+        "description": "Fail nếu: cùng chức năng nhưng tên gọi hoặc hành vi khác nhau giữa các màn."
+      },
+      {
+        "id": "heuristic-sweep.5",
+        "title": "Error prevention",
+        "description": "Fail nếu: action không hoàn tác được mà không có confirm."
+      },
+      {
+        "id": "heuristic-sweep.6",
+        "title": "Recognition",
+        "description": "Fail nếu: user phải nhớ thông tin từ màn trước để đi tiếp."
+      },
+      {
+        "id": "heuristic-sweep.7",
+        "title": "Efficiency",
+        "description": "Fail nếu: task lặp lại thường xuyên mà không có default, shortcut hay autofill."
+      },
+      {
+        "id": "heuristic-sweep.8",
+        "title": "Minimalism",
+        "description": "Fail nếu: có nội dung/element bỏ đi mà không ảnh hưởng task."
+      },
+      {
+        "id": "heuristic-sweep.9",
+        "title": "Error messages",
+        "description": "Fail nếu: lỗi không nói nguyên nhân + cách sửa."
+      },
+      {
+        "id": "heuristic-sweep.10",
+        "title": "Help",
+        "description": "Fail nếu: field/khái niệm khó không có helper text inline."
+      }
+    ],
+    "slopSignalIds": [],
+    "outputContract": [
+      "Criterion",
+      "Status (pass / fail / review / na)",
+      "Problem",
+      "Evidence (screen + element + exact text/value)",
+      "Severity (BLOCKER / HIGH / MEDIUM / LOW)",
+      "Fix (one concrete change)",
+      "Confidence (High / Medium / Low)"
+    ],
+    "promptTemplate": "You are a senior product designer doing QA on an AI-generated {{scope}}.\n\nTARGET: {{target}}\nUSER & GOAL: {{user-goal}}\nARTIFACT: {{artifact}}\nCONTEXT: {{skill-inputs}}\nREVIEWER NOTES: {{included-notes}}\n\nEvaluate ONLY these criteria. A criterion fails ONLY when its FAIL IF condition is met:\n{{checklist}}\n\nRULES\n1. Every \"fail\" must cite evidence: screen + element + exact text or value.\n2. Not enough evidence → status \"review\". Never guess pass or fail.\n3. Do not report issues outside this list.\n4. One finding per root cause. Merge duplicates.\n5. Fix = one concrete change. No \"improve X\" or \"consider Y\".\n\nOUTPUT\n1. Table: criterion | status | severity\n2. Findings (fail + review only), sorted BLOCKER → LOW:\n   Problem / Evidence / Severity / Fix / Principle / Confidence\n3. Top 3 fixes to do first.",
+    "cardEN": "Quick 10-heuristic scan to find where to dig deeper"
+  },
+  {
+    "id": "purpose-fit",
+    "name": "Purpose & Context Fit",
+    "shortDescription": "Flow có phục vụ đúng người dùng và mục tiêu không",
+    "group": "Flow",
+    "scopes": [
+      "Product",
+      "Flow"
+    ],
+    "stages": [
+      "Structure",
+      "QA"
+    ],
+    "problems": [
+      "Trust",
+      "AI Slop"
+    ],
+    "detects": [
+      "no clear job",
+      "purposeless steps",
+      "dark patterns",
+      "generic flow"
+    ],
+    "whenToUse": "Trước khi review sâu, đặc biệt khi flow được AI gen từ prompt mơ hồ",
+    "inputs": [
+      {
+        "id": "target",
+        "label": "Flow / screens",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Checkout: Cart → Shipping → Payment → Success"
+      },
+      {
+        "id": "user-goal",
+        "label": "User & goal",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Returning buyer wants to reorder in < 1 min"
+      },
+      {
+        "id": "artifact",
+        "label": "Artifact",
+        "type": "text",
+        "placeholder": "Link, screenshots, or code path"
+      },
+      {
+        "id": "known-concern",
+        "label": "Known concern",
+        "type": "textarea",
+        "placeholder": "What to look at first?"
+      },
+      {
+        "id": "job-story",
+        "label": "Job story",
+        "type": "text",
+        "required": true,
+        "placeholder": "When… I want… so I can…"
+      },
+      {
+        "id": "domain",
+        "label": "Domain",
+        "type": "text",
+        "required": false,
+        "placeholder": "Product domain"
+      }
+    ],
+    "principleIds": [
+      "traceability",
+      "truthful-content"
+    ],
+    "criteria": [
+      {
+        "id": "purpose-fit.1",
+        "title": "Job is stated",
+        "description": "Fail nếu: không viết được job story 1 câu cho flow này."
+      },
+      {
+        "id": "purpose-fit.2",
+        "title": "Every step serves the job",
+        "description": "Fail nếu: có step, field hoặc section mà bỏ đi vẫn không ảnh hưởng kết quả của job."
+      },
+      {
+        "id": "purpose-fit.3",
+        "title": "No dark pattern",
+        "description": "Fail nếu: upsell, thu thập dữ liệu, urgency giả (countdown, \"only 2 left\") hoặc pre-checked opt-in chen vào trước khi user đạt mục tiêu."
+      },
+      {
+        "id": "purpose-fit.4",
+        "title": "Domain-specific",
+        "description": "Fail nếu: đổi tên sản phẩm sang một app khác mà màn hình vẫn hợp lý (generic test)."
+      }
+    ],
+    "slopSignalIds": [
+      "generic-ui"
+    ],
+    "outputContract": [
+      "Criterion",
+      "Status (pass / fail / review / na)",
+      "Problem",
+      "Evidence (screen + element + exact text/value)",
+      "Severity (BLOCKER / HIGH / MEDIUM / LOW)",
+      "Fix (one concrete change)",
+      "Confidence (High / Medium / Low)"
+    ],
+    "promptTemplate": "You are a senior product designer doing QA on an AI-generated {{scope}}.\n\nTARGET: {{target}}\nUSER & GOAL: {{user-goal}}\nARTIFACT: {{artifact}}\nCONTEXT: {{skill-inputs}}\nREVIEWER NOTES: {{included-notes}}\n\nEvaluate ONLY these criteria. A criterion fails ONLY when its FAIL IF condition is met:\n{{checklist}}\n\nRULES\n1. Every \"fail\" must cite evidence: screen + element + exact text or value.\n2. Not enough evidence → status \"review\". Never guess pass or fail.\n3. Do not report issues outside this list.\n4. One finding per root cause. Merge duplicates.\n5. Fix = one concrete change. No \"improve X\" or \"consider Y\".\n\nOUTPUT\n1. Table: criterion | status | severity\n2. Findings (fail + review only), sorted BLOCKER → LOW:\n   Problem / Evidence / Severity / Fix / Principle / Confidence\n3. Top 3 fixes to do first.",
+    "cardEN": "Does the flow serve a real user goal in context?"
+  },
+  {
+    "id": "task-flow",
+    "name": "Task Walkthrough",
+    "shortDescription": "Đi từng bước, tìm chỗ user bị kẹt",
+    "group": "Flow",
+    "scopes": [
+      "Flow",
+      "Screen"
+    ],
+    "stages": [
+      "Structure",
+      "Design",
+      "QA"
+    ],
+    "problems": [
+      "Usability",
+      "Conversion",
+      "Navigation"
+    ],
+    "detects": [
+      "hidden entry",
+      "unclear next action",
+      "vague CTA",
+      "missing feedback",
+      "extra steps"
+    ],
+    "whenToUse": "Mọi flow quan trọng: onboarding, signup, checkout, create/edit",
+    "inputs": [
+      {
+        "id": "target",
+        "label": "Flow / screens",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Checkout: Cart → Shipping → Payment → Success"
+      },
+      {
+        "id": "user-goal",
+        "label": "User & goal",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Returning buyer wants to reorder in < 1 min"
+      },
+      {
+        "id": "artifact",
+        "label": "Artifact",
+        "type": "text",
+        "placeholder": "Link, screenshots, or code path"
+      },
+      {
+        "id": "known-concern",
+        "label": "Known concern",
+        "type": "textarea",
+        "placeholder": "What to look at first?"
+      },
+      {
+        "id": "task",
+        "label": "Task",
+        "type": "text",
+        "required": true,
+        "placeholder": "What is the user trying to do?"
+      },
+      {
+        "id": "success-state",
+        "label": "Success state",
+        "type": "text",
+        "required": false,
+        "placeholder": "What confirms successful completion?"
+      }
+    ],
+    "principleIds": [
+      "state-matched-feedback",
+      "recognition-over-recall"
+    ],
+    "criteria": [
+      {
+        "id": "task-flow.1",
+        "title": "Clear entry",
+        "description": "Fail nếu: entry point bị ẩn trong menu, hoặc user không biết bắt đầu từ đâu."
+      },
+      {
+        "id": "task-flow.2",
+        "title": "Next action visible",
+        "description": "Fail nếu: ở bất kỳ step nào, action chính không thấy ngay, hoặc có ≥2 action ngang hàng nhau."
+      },
+      {
+        "id": "task-flow.3",
+        "title": "Label predicts result",
+        "description": "Fail nếu: CTA chung chung (\"Submit\", \"Continue\", \"Click here\") hoặc kết quả khác với label."
+      },
+      {
+        "id": "task-flow.4",
+        "title": "Feedback after action",
+        "description": "Fail nếu: không có phản hồi nhìn thấy ngay sau khi thao tác."
+      },
+      {
+        "id": "task-flow.5",
+        "title": "Completion is explicit",
+        "description": "Fail nếu: kết thúc flow mà không có xác nhận + next step."
+      },
+      {
+        "id": "task-flow.6",
+        "title": "No unnecessary steps",
+        "description": "Fail nếu: có step gộp được, bỏ được, hoặc hệ thống tự điền được."
+      }
+    ],
+    "slopSignalIds": [],
+    "outputContract": [
+      "Criterion",
+      "Status (pass / fail / review / na)",
+      "Problem",
+      "Evidence (screen + element + exact text/value)",
+      "Severity (BLOCKER / HIGH / MEDIUM / LOW)",
+      "Fix (one concrete change)",
+      "Confidence (High / Medium / Low)"
+    ],
+    "promptTemplate": "You are a senior product designer doing QA on an AI-generated {{scope}}.\n\nTARGET: {{target}}\nUSER & GOAL: {{user-goal}}\nARTIFACT: {{artifact}}\nCONTEXT: {{skill-inputs}}\nREVIEWER NOTES: {{included-notes}}\n\nEvaluate ONLY these criteria. A criterion fails ONLY when its FAIL IF condition is met:\n{{checklist}}\n\nRULES\n1. Every \"fail\" must cite evidence: screen + element + exact text or value.\n2. Not enough evidence → status \"review\". Never guess pass or fail.\n3. Do not report issues outside this list.\n4. One finding per root cause. Merge duplicates.\n5. Fix = one concrete change. No \"improve X\" or \"consider Y\".\n\nOUTPUT\n1. Table: criterion | status | severity\n2. Findings (fail + review only), sorted BLOCKER → LOW:\n   Problem / Evidence / Severity / Fix / Principle / Confidence\n3. Top 3 fixes to do first.",
+    "cardEN": "Walk each step, find where users get stuck"
+  },
+  {
+    "id": "flow-completeness",
+    "name": "Dead Ends & Missing Paths",
+    "shortDescription": "Tìm nút chết, nhánh thiếu, flow chỉ có happy path",
+    "group": "Flow",
+    "scopes": [
+      "Flow",
+      "Code"
+    ],
+    "stages": [
+      "Build",
+      "QA"
+    ],
+    "problems": [
+      "Usability",
+      "AI Slop"
+    ],
+    "detects": [
+      "dead CTA",
+      "no back/cancel",
+      "missing branches",
+      "success dead end",
+      "data not carried"
+    ],
+    "whenToUse": "Luôn chạy với output AI-gen, vì AI thường chỉ build happy path",
+    "inputs": [
+      {
+        "id": "target",
+        "label": "Flow / screens",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Checkout: Cart → Shipping → Payment → Success"
+      },
+      {
+        "id": "user-goal",
+        "label": "User & goal",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Returning buyer wants to reorder in < 1 min"
+      },
+      {
+        "id": "artifact",
+        "label": "Artifact",
+        "type": "text",
+        "placeholder": "Link, screenshots, or code path"
+      },
+      {
+        "id": "known-concern",
+        "label": "Known concern",
+        "type": "textarea",
+        "placeholder": "What to look at first?"
+      },
+      {
+        "id": "screen-list",
+        "label": "Screen list",
+        "type": "text",
+        "required": false,
+        "placeholder": "List the screens in this flow"
+      },
+      {
+        "id": "expected-branches",
+        "label": "Expected branches",
+        "type": "text",
+        "required": false,
+        "placeholder": "Logged out, no permission, edit, delete…"
+      }
+    ],
+    "principleIds": [
+      "no-dead-ends"
+    ],
+    "criteria": [
+      {
+        "id": "flow-completeness.1",
+        "title": "Every CTA has a destination",
+        "description": "Fail nếu: button/link không làm gì, trỏ `#`, hoặc dẫn tới màn không tồn tại."
+      },
+      {
+        "id": "flow-completeness.2",
+        "title": "Exit path on every step",
+        "description": "Fail nếu: step không có Back/Cancel/Close và không có lý do rõ ràng."
+      },
+      {
+        "id": "flow-completeness.3",
+        "title": "Alternate branches exist",
+        "description": "Fail nếu: thiếu nhánh như chưa đăng nhập, không có quyền, quên mật khẩu, edit/delete sau khi create."
+      },
+      {
+        "id": "flow-completeness.4",
+        "title": "Success is not a dead end",
+        "description": "Fail nếu: màn success không có hướng đi tiếp."
+      },
+      {
+        "id": "flow-completeness.5",
+        "title": "Data carries across steps",
+        "description": "Fail nếu: dữ liệu nhập ở step trước không xuất hiện hoặc sai lệch ở step sau (review, summary, receipt)."
+      }
+    ],
+    "slopSignalIds": [
+      "dead-cta",
+      "happy-path-only"
+    ],
+    "outputContract": [
+      "Criterion",
+      "Status (pass / fail / review / na)",
+      "Problem",
+      "Evidence (screen + element + exact text/value)",
+      "Severity (BLOCKER / HIGH / MEDIUM / LOW)",
+      "Fix (one concrete change)",
+      "Confidence (High / Medium / Low)"
+    ],
+    "promptTemplate": "You are a senior product designer doing QA on an AI-generated {{scope}}.\n\nTARGET: {{target}}\nUSER & GOAL: {{user-goal}}\nARTIFACT: {{artifact}}\nCONTEXT: {{skill-inputs}}\nREVIEWER NOTES: {{included-notes}}\n\nEvaluate ONLY these criteria. A criterion fails ONLY when its FAIL IF condition is met:\n{{checklist}}\n\nRULES\n1. Every \"fail\" must cite evidence: screen + element + exact text or value.\n2. Not enough evidence → status \"review\". Never guess pass or fail.\n3. Do not report issues outside this list.\n4. One finding per root cause. Merge duplicates.\n5. Fix = one concrete change. No \"improve X\" or \"consider Y\".\n\nOUTPUT\n1. Table: criterion | status | severity\n2. Findings (fail + review only), sorted BLOCKER → LOW:\n   Problem / Evidence / Severity / Fix / Principle / Confidence\n3. Top 3 fixes to do first.",
+    "cardEN": "Find dead ends and missing paths"
+  },
+  {
+    "id": "state-recovery",
+    "name": "States & Recovery",
+    "shortDescription": "Đủ trạng thái và phục hồi được khi lỗi",
+    "group": "Flow",
+    "scopes": [
+      "Component",
+      "Screen",
+      "Flow",
+      "Code"
+    ],
+    "stages": [
+      "Build",
+      "QA"
+    ],
+    "problems": [
+      "Usability",
+      "Trust"
+    ],
+    "detects": [
+      "missing loading/empty/error",
+      "generic error",
+      "lost input",
+      "double submit"
+    ],
+    "whenToUse": "Màn data-driven, form, payment, action xóa",
+    "inputs": [
+      {
+        "id": "target",
+        "label": "Flow / screens",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Checkout: Cart → Shipping → Payment → Success"
+      },
+      {
+        "id": "user-goal",
+        "label": "User & goal",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Returning buyer wants to reorder in < 1 min"
+      },
+      {
+        "id": "artifact",
+        "label": "Artifact",
+        "type": "text",
+        "placeholder": "Link, screenshots, or code path"
+      },
+      {
+        "id": "known-concern",
+        "label": "Known concern",
+        "type": "textarea",
+        "placeholder": "What to look at first?"
+      },
+      {
+        "id": "async-events",
+        "label": "Async events",
+        "type": "text",
+        "required": false,
+        "placeholder": "Loading, network requests, background jobs…"
+      },
+      {
+        "id": "failure-scenarios",
+        "label": "Failure scenarios",
+        "type": "text",
+        "required": false,
+        "placeholder": "Validation, payment, network errors…"
+      }
+    ],
+    "principleIds": [
+      "state-matched-feedback",
+      "no-dead-ends"
+    ],
+    "criteria": [
+      {
+        "id": "state-recovery.1",
+        "title": "States exist",
+        "description": "Fail nếu: màn data-driven thiếu một trong các trạng thái loading, empty, error, success, partial."
+      },
+      {
+        "id": "state-recovery.2",
+        "title": "Empty state guides",
+        "description": "Fail nếu: chỉ hiện \"No data\" mà không có lý do + action."
+      },
+      {
+        "id": "state-recovery.3",
+        "title": "Errors are specific",
+        "description": "Fail nếu: \"Something went wrong\" mà không có nguyên nhân + cách sửa."
+      },
+      {
+        "id": "state-recovery.4",
+        "title": "Input preserved",
+        "description": "Fail nếu: lỗi validate hoặc lỗi network làm mất dữ liệu đã nhập."
+      },
+      {
+        "id": "state-recovery.5",
+        "title": "Prevent before fix",
+        "description": "Fail nếu: action destructive không có confirm/undo, hoặc form dài chỉ validate sau khi submit."
+      },
+      {
+        "id": "state-recovery.6",
+        "title": "Controls match state",
+        "description": "Fail nếu: vẫn bấm được nút submit khi đang loading, hoặc nút bị disabled mà không nói lý do."
+      }
+    ],
+    "slopSignalIds": [
+      "happy-path-only",
+      "premature-success"
+    ],
+    "outputContract": [
+      "Criterion",
+      "Status (pass / fail / review / na)",
+      "Problem",
+      "Evidence (screen + element + exact text/value)",
+      "Severity (BLOCKER / HIGH / MEDIUM / LOW)",
+      "Fix (one concrete change)",
+      "Confidence (High / Medium / Low)"
+    ],
+    "promptTemplate": "You are a senior product designer doing QA on an AI-generated {{scope}}.\n\nTARGET: {{target}}\nUSER & GOAL: {{user-goal}}\nARTIFACT: {{artifact}}\nCONTEXT: {{skill-inputs}}\nREVIEWER NOTES: {{included-notes}}\n\nEvaluate ONLY these criteria. A criterion fails ONLY when its FAIL IF condition is met:\n{{checklist}}\n\nRULES\n1. Every \"fail\" must cite evidence: screen + element + exact text or value.\n2. Not enough evidence → status \"review\". Never guess pass or fail.\n3. Do not report issues outside this list.\n4. One finding per root cause. Merge duplicates.\n5. Fix = one concrete change. No \"improve X\" or \"consider Y\".\n\nOUTPUT\n1. Table: criterion | status | severity\n2. Findings (fail + review only), sorted BLOCKER → LOW:\n   Problem / Evidence / Severity / Fix / Principle / Confidence\n3. Top 3 fixes to do first.",
+    "cardEN": "Complete states and error recovery"
+  },
+  {
+    "id": "ia-labels",
+    "name": "IA & Labels",
+    "shortDescription": "Nhãn dễ hiểu, thông tin dễ tìm",
+    "group": "Content",
+    "scopes": [
+      "Product",
+      "Flow",
+      "Content"
+    ],
+    "stages": [
+      "Structure",
+      "QA"
+    ],
+    "problems": [
+      "Navigation",
+      "Consistency"
+    ],
+    "detects": [
+      "jargon",
+      "terminology drift",
+      "illogical grouping",
+      "hidden key info"
+    ],
+    "whenToUse": "Navigation, settings, màn nhiều mục",
+    "inputs": [
+      {
+        "id": "target",
+        "label": "Flow / screens",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Checkout: Cart → Shipping → Payment → Success"
+      },
+      {
+        "id": "user-goal",
+        "label": "User & goal",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Returning buyer wants to reorder in < 1 min"
+      },
+      {
+        "id": "artifact",
+        "label": "Artifact",
+        "type": "text",
+        "placeholder": "Link, screenshots, or code path"
+      },
+      {
+        "id": "known-concern",
+        "label": "Known concern",
+        "type": "textarea",
+        "placeholder": "What to look at first?"
+      },
+      {
+        "id": "user-terms",
+        "label": "User terms",
+        "type": "text",
+        "required": false,
+        "placeholder": "Terms real users use"
+      }
+    ],
+    "principleIds": [
+      "recognition-over-recall"
+    ],
+    "criteria": [
+      {
+        "id": "ia-labels.1",
+        "title": "User language",
+        "description": "Fail nếu: label dùng thuật ngữ nội bộ/kỹ thuật (\"Entity\", \"Sync object\")."
+      },
+      {
+        "id": "ia-labels.2",
+        "title": "One term, one meaning",
+        "description": "Fail nếu: một khái niệm có ≥2 tên trong flow (Order / Purchase / Booking)."
+      },
+      {
+        "id": "ia-labels.3",
+        "title": "Logical grouping",
+        "description": "Fail nếu: mục không liên quan nằm chung nhóm, hoặc mục liên quan nằm rải rác."
+      },
+      {
+        "id": "ia-labels.4",
+        "title": "Decision info findable",
+        "description": "Fail nếu: giá, deadline, trạng thái bị ẩn sau click hoặc phải scroll sâu."
+      },
+      {
+        "id": "ia-labels.5",
+        "title": "Location is clear",
+        "description": "Fail nếu: thiếu title, active nav hoặc step indicator."
+      }
+    ],
+    "slopSignalIds": [
+      "terminology-drift"
+    ],
+    "outputContract": [
+      "Criterion",
+      "Status (pass / fail / review / na)",
+      "Problem",
+      "Evidence (screen + element + exact text/value)",
+      "Severity (BLOCKER / HIGH / MEDIUM / LOW)",
+      "Fix (one concrete change)",
+      "Confidence (High / Medium / Low)"
+    ],
+    "promptTemplate": "You are a senior product designer doing QA on an AI-generated {{scope}}.\n\nTARGET: {{target}}\nUSER & GOAL: {{user-goal}}\nARTIFACT: {{artifact}}\nCONTEXT: {{skill-inputs}}\nREVIEWER NOTES: {{included-notes}}\n\nEvaluate ONLY these criteria. A criterion fails ONLY when its FAIL IF condition is met:\n{{checklist}}\n\nRULES\n1. Every \"fail\" must cite evidence: screen + element + exact text or value.\n2. Not enough evidence → status \"review\". Never guess pass or fail.\n3. Do not report issues outside this list.\n4. One finding per root cause. Merge duplicates.\n5. Fix = one concrete change. No \"improve X\" or \"consider Y\".\n\nOUTPUT\n1. Table: criterion | status | severity\n2. Findings (fail + review only), sorted BLOCKER → LOW:\n   Problem / Evidence / Severity / Fix / Principle / Confidence\n3. Top 3 fixes to do first.",
+    "cardEN": "Clear labels, findable information"
+  },
+  {
+    "id": "content-truth",
+    "name": "Content Truth",
+    "shortDescription": "Tìm dữ liệu giả, số liệu bịa, copy chung chung",
+    "group": "Content",
+    "scopes": [
+      "Content",
+      "Screen",
+      "Flow"
+    ],
+    "stages": [
+      "Design",
+      "QA"
+    ],
+    "problems": [
+      "Trust",
+      "AI Slop"
+    ],
+    "detects": [
+      "placeholder leak",
+      "unsourced metrics",
+      "generic copy",
+      "hidden costs",
+      "false success"
+    ],
+    "whenToUse": "Luôn chạy với AI-gen, rủi ro cao nhất về trust",
+    "inputs": [
+      {
+        "id": "target",
+        "label": "Flow / screens",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Checkout: Cart → Shipping → Payment → Success"
+      },
+      {
+        "id": "user-goal",
+        "label": "User & goal",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Returning buyer wants to reorder in < 1 min"
+      },
+      {
+        "id": "artifact",
+        "label": "Artifact",
+        "type": "text",
+        "placeholder": "Link, screenshots, or code path"
+      },
+      {
+        "id": "known-concern",
+        "label": "Known concern",
+        "type": "textarea",
+        "placeholder": "What to look at first?"
+      },
+      {
+        "id": "real-data-source",
+        "label": "Real data source",
+        "type": "text",
+        "required": false,
+        "placeholder": "Source of metrics, claims, and testimonials"
+      },
+      {
+        "id": "sensitive-data",
+        "label": "Sensitive data",
+        "type": "text",
+        "required": false,
+        "placeholder": "Personal or financial information involved"
+      }
+    ],
+    "principleIds": [
+      "truthful-content",
+      "state-matched-feedback"
+    ],
+    "criteria": [
+      {
+        "id": "content-truth.1",
+        "title": "No placeholder leak",
+        "description": "Fail nếu: còn lorem ipsum, \"John Doe\", \"Acme\", `$99.99`, TODO, ảnh stock."
+      },
+      {
+        "id": "content-truth.2",
+        "title": "Numbers are real or marked",
+        "description": "Fail nếu: metric, %, rating, testimonial hoặc \"10,000+ users\" không có nguồn và không được đánh dấu là sample."
+      },
+      {
+        "id": "content-truth.3",
+        "title": "Copy is specific",
+        "description": "Fail nếu: câu chung chung (\"Unlock your potential\", \"Seamless experience\") dùng được cho bất kỳ app nào."
+      },
+      {
+        "id": "content-truth.4",
+        "title": "Costs shown before commit",
+        "description": "Fail nếu: phí, giới hạn, auto-renew hoặc cách dùng dữ liệu chỉ hiện ra sau khi user bấm."
+      },
+      {
+        "id": "content-truth.5",
+        "title": "Claims match behavior",
+        "description": "Fail nếu: hiện \"Secure\", \"Saved\", \"Done\" khi hệ thống chưa thực sự làm (VD: toast hiện trước khi API trả về)."
+      }
+    ],
+    "slopSignalIds": [
+      "placeholder-leak",
+      "fake-dashboard",
+      "generic-copy",
+      "premature-success"
+    ],
+    "outputContract": [
+      "Criterion",
+      "Status (pass / fail / review / na)",
+      "Problem",
+      "Evidence (screen + element + exact text/value)",
+      "Severity (BLOCKER / HIGH / MEDIUM / LOW)",
+      "Fix (one concrete change)",
+      "Confidence (High / Medium / Low)"
+    ],
+    "promptTemplate": "You are a senior product designer doing QA on an AI-generated {{scope}}.\n\nTARGET: {{target}}\nUSER & GOAL: {{user-goal}}\nARTIFACT: {{artifact}}\nCONTEXT: {{skill-inputs}}\nREVIEWER NOTES: {{included-notes}}\n\nEvaluate ONLY these criteria. A criterion fails ONLY when its FAIL IF condition is met:\n{{checklist}}\n\nRULES\n1. Every \"fail\" must cite evidence: screen + element + exact text or value.\n2. Not enough evidence → status \"review\". Never guess pass or fail.\n3. Do not report issues outside this list.\n4. One finding per root cause. Merge duplicates.\n5. Fix = one concrete change. No \"improve X\" or \"consider Y\".\n\nOUTPUT\n1. Table: criterion | status | severity\n2. Findings (fail + review only), sorted BLOCKER → LOW:\n   Problem / Evidence / Severity / Fix / Principle / Confidence\n3. Top 3 fixes to do first.",
+    "cardEN": "Find fake data, invented claims, generic copy"
+  },
+  {
+    "id": "cognitive-load",
+    "name": "Cognitive Load",
+    "shortDescription": "Giảm thứ user phải nhớ và phải chọn",
+    "group": "Content",
+    "scopes": [
+      "Flow",
+      "Screen",
+      "Content"
+    ],
+    "stages": [
+      "Structure",
+      "Design",
+      "QA"
+    ],
+    "problems": [
+      "Complexity",
+      "Usability"
+    ],
+    "detects": [
+      "unchunked forms",
+      "too many choices",
+      "recall burden",
+      "redundant entry"
+    ],
+    "whenToUse": "Form dài, dashboard, flow nhiều bước, màn có nhiều lựa chọn",
+    "inputs": [
+      {
+        "id": "target",
+        "label": "Flow / screens",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Checkout: Cart → Shipping → Payment → Success"
+      },
+      {
+        "id": "user-goal",
+        "label": "User & goal",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Returning buyer wants to reorder in < 1 min"
+      },
+      {
+        "id": "artifact",
+        "label": "Artifact",
+        "type": "text",
+        "placeholder": "Link, screenshots, or code path"
+      },
+      {
+        "id": "known-concern",
+        "label": "Known concern",
+        "type": "textarea",
+        "placeholder": "What to look at first?"
+      }
+    ],
+    "principleIds": [
+      "recognition-over-recall"
+    ],
+    "criteria": [
+      {
+        "id": "cognitive-load.1",
+        "title": "Chunked",
+        "description": "Fail nếu: form/list dài không chia nhóm hoặc step; nhóm có hơn ~7 item mà không phân cấp."
+      },
+      {
+        "id": "cognitive-load.2",
+        "title": "Choices limited",
+        "description": "Fail nếu: điểm quyết định có nhiều lựa chọn ngang hàng mà không có default/recommended."
+      },
+      {
+        "id": "cognitive-load.3",
+        "title": "No recall needed",
+        "description": "Fail nếu: user phải nhớ mã, giá hoặc lựa chọn từ màn trước."
+      },
+      {
+        "id": "cognitive-load.4",
+        "title": "System absorbs complexity",
+        "description": "Fail nếu: bắt user nhập thứ hệ thống tự suy ra được, hoặc nhập lại dữ liệu đã cung cấp (WCAG 3.3.7 Redundant Entry)."
+      },
+      {
+        "id": "cognitive-load.5",
+        "title": "Help at the moment",
+        "description": "Fail nếu: hướng dẫn bị dồn ở đầu thay vì inline đúng chỗ cần."
+      }
+    ],
+    "slopSignalIds": [],
+    "outputContract": [
+      "Criterion",
+      "Status (pass / fail / review / na)",
+      "Problem",
+      "Evidence (screen + element + exact text/value)",
+      "Severity (BLOCKER / HIGH / MEDIUM / LOW)",
+      "Fix (one concrete change)",
+      "Confidence (High / Medium / Low)"
+    ],
+    "promptTemplate": "You are a senior product designer doing QA on an AI-generated {{scope}}.\n\nTARGET: {{target}}\nUSER & GOAL: {{user-goal}}\nARTIFACT: {{artifact}}\nCONTEXT: {{skill-inputs}}\nREVIEWER NOTES: {{included-notes}}\n\nEvaluate ONLY these criteria. A criterion fails ONLY when its FAIL IF condition is met:\n{{checklist}}\n\nRULES\n1. Every \"fail\" must cite evidence: screen + element + exact text or value.\n2. Not enough evidence → status \"review\". Never guess pass or fail.\n3. Do not report issues outside this list.\n4. One finding per root cause. Merge duplicates.\n5. Fix = one concrete change. No \"improve X\" or \"consider Y\".\n\nOUTPUT\n1. Table: criterion | status | severity\n2. Findings (fail + review only), sorted BLOCKER → LOW:\n   Problem / Evidence / Severity / Fix / Principle / Confidence\n3. Top 3 fixes to do first.",
+    "cardEN": "Reduce memory and decision burden"
+  },
+  {
+    "id": "visual-hierarchy",
+    "name": "Visual Hierarchy",
+    "shortDescription": "Nhìn là biết cái gì quan trọng",
+    "group": "Visual",
+    "scopes": [
+      "Screen",
+      "Component"
+    ],
+    "stages": [
+      "Design",
+      "QA"
+    ],
+    "problems": [
+      "Usability",
+      "Conversion"
+    ],
+    "detects": [
+      "competing CTAs",
+      "unclear purpose",
+      "wrong proximity",
+      "inconsistent styling"
+    ],
+    "whenToUse": "User bỏ sót CTA chính, màn hình rối mắt",
+    "inputs": [
+      {
+        "id": "target",
+        "label": "Flow / screens",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Checkout: Cart → Shipping → Payment → Success"
+      },
+      {
+        "id": "user-goal",
+        "label": "User & goal",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Returning buyer wants to reorder in < 1 min"
+      },
+      {
+        "id": "artifact",
+        "label": "Artifact",
+        "type": "text",
+        "placeholder": "Link, screenshots, or code path"
+      },
+      {
+        "id": "known-concern",
+        "label": "Known concern",
+        "type": "textarea",
+        "placeholder": "What to look at first?"
+      },
+      {
+        "id": "primary-action",
+        "label": "Primary action",
+        "type": "text",
+        "required": true,
+        "placeholder": "The main action on this screen"
+      }
+    ],
+    "principleIds": [
+      "hierarchy-before-decoration"
+    ],
+    "criteria": [
+      {
+        "id": "visual-hierarchy.1",
+        "title": "One primary action",
+        "description": "Fail nếu: ≥2 CTA có cùng visual weight, hoặc CTA chính không phải element nổi bật nhất."
+      },
+      {
+        "id": "visual-hierarchy.2",
+        "title": "5-second test",
+        "description": "Fail nếu: nhìn 5 giây không nói được màn này dùng để làm gì."
+      },
+      {
+        "id": "visual-hierarchy.3",
+        "title": "Proximity = relation",
+        "description": "Fail nếu: khoảng cách giữa các mục không liên quan ≤ khoảng cách giữa các mục liên quan (VD: label nằm xa input)."
+      },
+      {
+        "id": "visual-hierarchy.4",
+        "title": "Same function, same style",
+        "description": "Fail nếu: cùng chức năng nhưng khác style, hoặc khác chức năng nhưng trông giống nhau (link và text thường)."
+      },
+      {
+        "id": "visual-hierarchy.5",
+        "title": "Emphasis is rationed",
+        "description": "Fail nếu: có quá 2 điểm nhấn (màu nổi, bold, badge) cạnh tranh trong cùng một viewport."
+      }
+    ],
+    "slopSignalIds": [
+      "equal-prominence"
+    ],
+    "outputContract": [
+      "Criterion",
+      "Status (pass / fail / review / na)",
+      "Problem",
+      "Evidence (screen + element + exact text/value)",
+      "Severity (BLOCKER / HIGH / MEDIUM / LOW)",
+      "Fix (one concrete change)",
+      "Confidence (High / Medium / Low)"
+    ],
+    "promptTemplate": "You are a senior product designer doing QA on an AI-generated {{scope}}.\n\nTARGET: {{target}}\nUSER & GOAL: {{user-goal}}\nARTIFACT: {{artifact}}\nCONTEXT: {{skill-inputs}}\nREVIEWER NOTES: {{included-notes}}\n\nEvaluate ONLY these criteria. A criterion fails ONLY when its FAIL IF condition is met:\n{{checklist}}\n\nRULES\n1. Every \"fail\" must cite evidence: screen + element + exact text or value.\n2. Not enough evidence → status \"review\". Never guess pass or fail.\n3. Do not report issues outside this list.\n4. One finding per root cause. Merge duplicates.\n5. Fix = one concrete change. No \"improve X\" or \"consider Y\".\n\nOUTPUT\n1. Table: criterion | status | severity\n2. Findings (fail + review only), sorted BLOCKER → LOW:\n   Problem / Evidence / Severity / Fix / Principle / Confidence\n3. Top 3 fixes to do first.",
+    "cardEN": "Key content and actions are obvious"
+  },
+  {
+    "id": "ai-visual-slop",
+    "name": "AI Visual Slop",
+    "shortDescription": "Tìm trang trí và card thừa không có lý do",
+    "group": "Visual",
+    "scopes": [
+      "Screen",
+      "Component"
+    ],
+    "stages": [
+      "Design",
+      "QA"
+    ],
+    "problems": [
+      "AI Slop",
+      "Complexity"
+    ],
+    "detects": [
+      "decorative gradients",
+      "nested cards",
+      "meaningless badges",
+      "template layout"
+    ],
+    "whenToUse": "Output AI-gen hoặc UI dựng nhiều từ template",
+    "inputs": [
+      {
+        "id": "target",
+        "label": "Flow / screens",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Checkout: Cart → Shipping → Payment → Success"
+      },
+      {
+        "id": "user-goal",
+        "label": "User & goal",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Returning buyer wants to reorder in < 1 min"
+      },
+      {
+        "id": "artifact",
+        "label": "Artifact",
+        "type": "text",
+        "placeholder": "Link, screenshots, or code path"
+      },
+      {
+        "id": "known-concern",
+        "label": "Known concern",
+        "type": "textarea",
+        "placeholder": "What to look at first?"
+      }
+    ],
+    "principleIds": [
+      "weakest-sufficient-separator",
+      "hierarchy-before-decoration"
+    ],
+    "criteria": [
+      {
+        "id": "ai-visual-slop.1",
+        "title": "Decoration has a job",
+        "description": "Fail nếu: gradient, glow, blur, illustration hoặc emoji không báo status, hierarchy hay action."
+      },
+      {
+        "id": "ai-visual-slop.2",
+        "title": "Containers have a reason",
+        "description": "Fail nếu: card lồng card, hoặc mỗi item là một card dù không có action riêng."
+      },
+      {
+        "id": "ai-visual-slop.3",
+        "title": "Lightest separator",
+        "description": "Fail nếu: dùng cả border + shadow + background trong khi chỉ spacing là đủ."
+      },
+      {
+        "id": "ai-visual-slop.4",
+        "title": "Badges mean something",
+        "description": "Fail nếu: badge/pill không phải status, category hay filter."
+      },
+      {
+        "id": "ai-visual-slop.5",
+        "title": "Not template default",
+        "description": "Fail nếu: dùng layout mặc định của AI (hero gradient + 3 feature card + icon tròn) mà không có lý do từ domain."
+      }
+    ],
+    "slopSignalIds": [
+      "cardification",
+      "excessive-pills",
+      "excessive-badges",
+      "gradient-glow-overuse",
+      "meaningless-decoration",
+      "emoji-decoration",
+      "generic-ui"
+    ],
+    "outputContract": [
+      "Criterion",
+      "Status (pass / fail / review / na)",
+      "Problem",
+      "Evidence (screen + element + exact text/value)",
+      "Severity (BLOCKER / HIGH / MEDIUM / LOW)",
+      "Fix (one concrete change)",
+      "Confidence (High / Medium / Low)"
+    ],
+    "promptTemplate": "You are a senior product designer doing QA on an AI-generated {{scope}}.\n\nTARGET: {{target}}\nUSER & GOAL: {{user-goal}}\nARTIFACT: {{artifact}}\nCONTEXT: {{skill-inputs}}\nREVIEWER NOTES: {{included-notes}}\n\nEvaluate ONLY these criteria. A criterion fails ONLY when its FAIL IF condition is met:\n{{checklist}}\n\nRULES\n1. Every \"fail\" must cite evidence: screen + element + exact text or value.\n2. Not enough evidence → status \"review\". Never guess pass or fail.\n3. Do not report issues outside this list.\n4. One finding per root cause. Merge duplicates.\n5. Fix = one concrete change. No \"improve X\" or \"consider Y\".\n\nOUTPUT\n1. Table: criterion | status | severity\n2. Findings (fail + review only), sorted BLOCKER → LOW:\n   Problem / Evidence / Severity / Fix / Principle / Confidence\n3. Top 3 fixes to do first.",
+    "cardEN": "Find decoration and containers with no purpose"
+  },
+  {
+    "id": "design-system",
+    "name": "Design System",
+    "shortDescription": "Dùng đúng token và component",
+    "group": "Build",
+    "scopes": [
+      "Component",
+      "Screen",
+      "Code"
+    ],
+    "stages": [
+      "Build",
+      "QA"
+    ],
+    "problems": [
+      "Consistency"
+    ],
+    "detects": [
+      "hardcoded values",
+      "duplicate components",
+      "inconsistent behavior"
+    ],
+    "whenToUse": "Trước handoff, review code AI-gen",
+    "inputs": [
+      {
+        "id": "target",
+        "label": "Flow / screens",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Checkout: Cart → Shipping → Payment → Success"
+      },
+      {
+        "id": "user-goal",
+        "label": "User & goal",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Returning buyer wants to reorder in < 1 min"
+      },
+      {
+        "id": "artifact",
+        "label": "Artifact",
+        "type": "text",
+        "placeholder": "Link, screenshots, or code path"
+      },
+      {
+        "id": "known-concern",
+        "label": "Known concern",
+        "type": "textarea",
+        "placeholder": "What to look at first?"
+      },
+      {
+        "id": "system-source",
+        "label": "Design system source",
+        "type": "text",
+        "required": true,
+        "placeholder": "Library, tokens, or code path"
+      },
+      {
+        "id": "known-exceptions",
+        "label": "Known exceptions",
+        "type": "text",
+        "required": false,
+        "placeholder": "Approved deviations and their reasons"
+      }
+    ],
+    "principleIds": [
+      "traceability"
+    ],
+    "criteria": [
+      {
+        "id": "design-system.1",
+        "title": "Reuse components",
+        "description": "Fail nếu: có component mới gần giống component sẵn có."
+      },
+      {
+        "id": "design-system.2",
+        "title": "Tokens only",
+        "description": "Fail nếu: color/spacing/radius/shadow bị hardcode, không map với token."
+      },
+      {
+        "id": "design-system.3",
+        "title": "Consistent behavior",
+        "description": "Fail nếu: cùng component nhưng hành vi khác nhau giữa các màn."
+      },
+      {
+        "id": "design-system.4",
+        "title": "Exceptions documented",
+        "description": "Fail nếu: có ngoại lệ mà không ghi lại lý do."
+      }
+    ],
+    "slopSignalIds": [
+      "arbitrary-tokens",
+      "component-proliferation"
+    ],
+    "outputContract": [
+      "Criterion",
+      "Status (pass / fail / review / na)",
+      "Problem",
+      "Evidence (screen + element + exact text/value)",
+      "Severity (BLOCKER / HIGH / MEDIUM / LOW)",
+      "Fix (one concrete change)",
+      "Confidence (High / Medium / Low)"
+    ],
+    "promptTemplate": "You are a senior product designer doing QA on an AI-generated {{scope}}.\n\nTARGET: {{target}}\nUSER & GOAL: {{user-goal}}\nARTIFACT: {{artifact}}\nCONTEXT: {{skill-inputs}}\nREVIEWER NOTES: {{included-notes}}\n\nEvaluate ONLY these criteria. A criterion fails ONLY when its FAIL IF condition is met:\n{{checklist}}\n\nRULES\n1. Every \"fail\" must cite evidence: screen + element + exact text or value.\n2. Not enough evidence → status \"review\". Never guess pass or fail.\n3. Do not report issues outside this list.\n4. One finding per root cause. Merge duplicates.\n5. Fix = one concrete change. No \"improve X\" or \"consider Y\".\n\nOUTPUT\n1. Table: criterion | status | severity\n2. Findings (fail + review only), sorted BLOCKER → LOW:\n   Problem / Evidence / Severity / Fix / Principle / Confidence\n3. Top 3 fixes to do first.",
+    "cardEN": "Correct tokens and components"
+  },
+  {
+    "id": "responsive",
+    "name": "Responsive",
+    "shortDescription": "Dùng tốt trên mọi kích thước màn hình",
+    "group": "Build",
+    "scopes": [
+      "Screen",
+      "Component",
+      "Code"
+    ],
+    "stages": [
+      "Build",
+      "QA"
+    ],
+    "problems": [
+      "Usability",
+      "Accessibility"
+    ],
+    "detects": [
+      "horizontal overflow",
+      "hidden content",
+      "CTA below fold",
+      "small targets"
+    ],
+    "whenToUse": "Trước QA cross-device",
+    "inputs": [
+      {
+        "id": "target",
+        "label": "Flow / screens",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Checkout: Cart → Shipping → Payment → Success"
+      },
+      {
+        "id": "user-goal",
+        "label": "User & goal",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Returning buyer wants to reorder in < 1 min"
+      },
+      {
+        "id": "artifact",
+        "label": "Artifact",
+        "type": "text",
+        "placeholder": "Link, screenshots, or code path"
+      },
+      {
+        "id": "known-concern",
+        "label": "Known concern",
+        "type": "textarea",
+        "placeholder": "What to look at first?"
+      },
+      {
+        "id": "viewports",
+        "label": "Viewports",
+        "type": "text",
+        "required": false,
+        "placeholder": "320 / 768 / 1280"
+      }
+    ],
+    "principleIds": [
+      "no-dead-ends"
+    ],
+    "criteria": [
+      {
+        "id": "responsive.1",
+        "title": "No horizontal overflow",
+        "description": "Fail nếu: có scroll ngang ở 320px (trừ table, map, code block)."
+      },
+      {
+        "id": "responsive.2",
+        "title": "Content parity",
+        "description": "Fail nếu: nội dung/chức năng bị ẩn trên mobile mà không có cách truy cập thay thế."
+      },
+      {
+        "id": "responsive.3",
+        "title": "Priority preserved",
+        "description": "Fail nếu: CTA chính bị đẩy xuống cuối trang trên mobile."
+      },
+      {
+        "id": "responsive.4",
+        "title": "Touch targets",
+        "description": "Fail nếu: target nhỏ hơn 24×24 CSS px (mức tối thiểu của WCAG 2.2); khuyến nghị 44×44."
+      },
+      {
+        "id": "responsive.5",
+        "title": "Zoom 200%",
+        "description": "Fail nếu: layout vỡ hoặc text bị cắt khi zoom 200%."
+      }
+    ],
+    "slopSignalIds": [],
+    "outputContract": [
+      "Criterion",
+      "Status (pass / fail / review / na)",
+      "Problem",
+      "Evidence (screen + element + exact text/value)",
+      "Severity (BLOCKER / HIGH / MEDIUM / LOW)",
+      "Fix (one concrete change)",
+      "Confidence (High / Medium / Low)"
+    ],
+    "promptTemplate": "You are a senior product designer doing QA on an AI-generated {{scope}}.\n\nTARGET: {{target}}\nUSER & GOAL: {{user-goal}}\nARTIFACT: {{artifact}}\nCONTEXT: {{skill-inputs}}\nREVIEWER NOTES: {{included-notes}}\n\nEvaluate ONLY these criteria. A criterion fails ONLY when its FAIL IF condition is met:\n{{checklist}}\n\nRULES\n1. Every \"fail\" must cite evidence: screen + element + exact text or value.\n2. Not enough evidence → status \"review\". Never guess pass or fail.\n3. Do not report issues outside this list.\n4. One finding per root cause. Merge duplicates.\n5. Fix = one concrete change. No \"improve X\" or \"consider Y\".\n\nOUTPUT\n1. Table: criterion | status | severity\n2. Findings (fail + review only), sorted BLOCKER → LOW:\n   Problem / Evidence / Severity / Fix / Principle / Confidence\n3. Top 3 fixes to do first.",
+    "cardEN": "Works across screen sizes"
+  },
+  {
+    "id": "accessibility",
+    "name": "Accessibility",
+    "shortDescription": "Đạt WCAG 2.2 AA trên flow chính",
+    "group": "Build",
+    "scopes": [
+      "Product",
+      "Screen",
+      "Component",
+      "Code"
+    ],
+    "stages": [
+      "Design",
+      "Build",
+      "QA"
+    ],
+    "problems": [
+      "Accessibility",
+      "Trust"
+    ],
+    "detects": [
+      "low contrast",
+      "color-only meaning",
+      "missing labels",
+      "keyboard traps",
+      "drag-only"
+    ],
+    "whenToUse": "Mọi flow public-facing, bắt buộc trước release",
+    "inputs": [
+      {
+        "id": "target",
+        "label": "Flow / screens",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Checkout: Cart → Shipping → Payment → Success"
+      },
+      {
+        "id": "user-goal",
+        "label": "User & goal",
+        "type": "text",
+        "required": true,
+        "placeholder": "e.g. Returning buyer wants to reorder in < 1 min"
+      },
+      {
+        "id": "artifact",
+        "label": "Artifact",
+        "type": "text",
+        "placeholder": "Link, screenshots, or code path"
+      },
+      {
+        "id": "known-concern",
+        "label": "Known concern",
+        "type": "textarea",
+        "placeholder": "What to look at first?"
+      }
+    ],
+    "principleIds": [
+      "state-matched-feedback"
+    ],
+    "criteria": [
+      {
+        "id": "accessibility.1",
+        "title": "Contrast",
+        "description": "Fail nếu: text < 4.5:1, text lớn < 3:1, UI/icon < 3:1."
+      },
+      {
+        "id": "accessibility.2",
+        "title": "Not color alone",
+        "description": "Fail nếu: status/error chỉ được thể hiện bằng màu."
+      },
+      {
+        "id": "accessibility.3",
+        "title": "Accessible names",
+        "description": "Fail nếu: icon button không có label, input chỉ có placeholder, image thiếu alt."
+      },
+      {
+        "id": "accessibility.4",
+        "title": "Keyboard",
+        "description": "Fail nếu: không Tab tới được element, không thấy focus, focus bị sticky header che (2.4.11), hoặc bị keyboard trap."
+      },
+      {
+        "id": "accessibility.5",
+        "title": "Motor & situational",
+        "description": "Fail nếu: chỉ thao tác được bằng drag hoặc gesture phức tạp mà không có cách thay thế (2.5.7), hoặc login bắt giải đố/nhớ mã (3.3.8)."
+      },
+      {
+        "id": "accessibility.6",
+        "title": "Media & motion",
+        "description": "Fail nếu: video không có caption, hoặc animation không tôn trọng `prefers-reduced-motion`."
+      }
+    ],
+    "slopSignalIds": [],
+    "outputContract": [
+      "Criterion",
+      "Status (pass / fail / review / na)",
+      "Problem",
+      "Evidence (screen + element + exact text/value)",
+      "Severity (BLOCKER / HIGH / MEDIUM / LOW)",
+      "Fix (one concrete change)",
+      "Confidence (High / Medium / Low)"
+    ],
+    "promptTemplate": "You are a senior product designer doing QA on an AI-generated {{scope}}.\n\nTARGET: {{target}}\nUSER & GOAL: {{user-goal}}\nARTIFACT: {{artifact}}\nCONTEXT: {{skill-inputs}}\nREVIEWER NOTES: {{included-notes}}\n\nEvaluate ONLY these criteria. A criterion fails ONLY when its FAIL IF condition is met:\n{{checklist}}\n\nRULES\n1. Every \"fail\" must cite evidence: screen + element + exact text or value.\n2. Not enough evidence → status \"review\". Never guess pass or fail.\n3. Do not report issues outside this list.\n4. One finding per root cause. Merge duplicates.\n5. Fix = one concrete change. No \"improve X\" or \"consider Y\".\n\nOUTPUT\n1. Table: criterion | status | severity\n2. Findings (fail + review only), sorted BLOCKER → LOW:\n   Problem / Evidence / Severity / Fix / Principle / Confidence\n3. Top 3 fixes to do first.",
+    "cardEN": "WCAG 2.2 AA on core flows"
+  }
+]

@@ -1,0 +1,364 @@
+{
+  "heuristic-sweep": {
+    "nameVI": "Quét heuristic",
+    "whenEN": "Run first when the source of problems is unclear. Use the results to choose a deep-dive skill.",
+    "criteria": [
+      {
+        "titleVI": "Trạng thái hệ thống",
+        "descriptionEN": "FAIL IF: There is no visible change after an action, or users cannot tell which step they are on."
+      },
+      {
+        "titleVI": "Ngôn ngữ thực tế",
+        "descriptionEN": "FAIL IF: Labels use technical or internal jargon instead of familiar user language."
+      },
+      {
+        "titleVI": "Quyền kiểm soát",
+        "descriptionEN": "FAIL IF: A step where users can make a mistake has no Back, Cancel, or Undo."
+      },
+      {
+        "titleVI": "Nhất quán",
+        "descriptionEN": "FAIL IF: The same function has different names or behaviors across screens."
+      },
+      {
+        "titleVI": "Ngăn lỗi",
+        "descriptionEN": "FAIL IF: An irreversible action has no confirmation."
+      },
+      {
+        "titleVI": "Nhận biết",
+        "descriptionEN": "FAIL IF: Users must remember information from a previous screen to continue."
+      },
+      {
+        "titleVI": "Hiệu quả",
+        "descriptionEN": "FAIL IF: A frequently repeated task has no defaults, shortcuts, or autofill."
+      },
+      {
+        "titleVI": "Tối giản",
+        "descriptionEN": "FAIL IF: Content or elements can be removed without affecting the task."
+      },
+      {
+        "titleVI": "Thông báo lỗi",
+        "descriptionEN": "FAIL IF: An error does not explain its cause and how to fix it."
+      },
+      {
+        "titleVI": "Trợ giúp",
+        "descriptionEN": "FAIL IF: A difficult field or concept has no inline help."
+      }
+    ]
+  },
+  "purpose-fit": {
+    "nameVI": "Phù hợp mục tiêu & ngữ cảnh",
+    "whenEN": "Use before detailed review, especially for flows generated from vague AI prompts.",
+    "criteria": [
+      {
+        "titleVI": "Job rõ ràng",
+        "descriptionEN": "FAIL IF: A one-sentence job story cannot be written for this flow."
+      },
+      {
+        "titleVI": "Mỗi bước phục vụ job",
+        "descriptionEN": "FAIL IF: Removing a step, field, or section would not affect the job outcome."
+      },
+      {
+        "titleVI": "Không dark pattern",
+        "descriptionEN": "FAIL IF: Upsells, data collection, fake urgency (countdowns or “only 2 left”), or pre-checked opt-ins interrupt users before they reach their goal."
+      },
+      {
+        "titleVI": "Đúng ngữ cảnh lĩnh vực",
+        "descriptionEN": "FAIL IF: Replacing the product name with another app still makes the screen equally plausible."
+      }
+    ]
+  },
+  "task-flow": {
+    "nameVI": "Đi từng bước tác vụ",
+    "whenEN": "Use for important flows: onboarding, signup, checkout, and create/edit.",
+    "criteria": [
+      {
+        "titleVI": "Điểm bắt đầu rõ",
+        "descriptionEN": "FAIL IF: The entry point is hidden in a menu, or users cannot tell where to start."
+      },
+      {
+        "titleVI": "Hành động tiếp theo dễ thấy",
+        "descriptionEN": "FAIL IF: The main action is not immediately visible at a step, or at least two actions have equal priority."
+      },
+      {
+        "titleVI": "Nhãn dự đoán kết quả",
+        "descriptionEN": "FAIL IF: The CTA is generic (“Submit”, “Continue”, “Click here”), or its result differs from the label."
+      },
+      {
+        "titleVI": "Phản hồi sau thao tác",
+        "descriptionEN": "FAIL IF: There is no visible feedback immediately after an action."
+      },
+      {
+        "titleVI": "Hoàn thành rõ ràng",
+        "descriptionEN": "FAIL IF: The flow ends without confirmation and a next step."
+      },
+      {
+        "titleVI": "Không bước thừa",
+        "descriptionEN": "FAIL IF: A step could be combined, removed, or filled automatically."
+      }
+    ]
+  },
+  "flow-completeness": {
+    "nameVI": "Ngõ cụt & nhánh thiếu",
+    "whenEN": "Always run on AI-generated output, which often implements only the happy path.",
+    "criteria": [
+      {
+        "titleVI": "Mỗi CTA có đích đến",
+        "descriptionEN": "FAIL IF: A button or link does nothing, points to #, or leads to a nonexistent screen."
+      },
+      {
+        "titleVI": "Mỗi bước có đường thoát",
+        "descriptionEN": "FAIL IF: A step has no Back, Cancel, or Close without a clear reason."
+      },
+      {
+        "titleVI": "Có nhánh thay thế",
+        "descriptionEN": "FAIL IF: Branches such as logged out, no permission, forgot password, or edit/delete after creation are missing."
+      },
+      {
+        "titleVI": "Success không là ngõ cụt",
+        "descriptionEN": "FAIL IF: The success screen offers no next destination."
+      },
+      {
+        "titleVI": "Dữ liệu đi qua các bước",
+        "descriptionEN": "FAIL IF: Data entered earlier is missing or inconsistent in later review, summary, or receipt screens."
+      }
+    ]
+  },
+  "state-recovery": {
+    "nameVI": "Trạng thái & phục hồi",
+    "whenEN": "Use for data-driven screens, forms, payments, and destructive actions.",
+    "criteria": [
+      {
+        "titleVI": "Đủ trạng thái",
+        "descriptionEN": "FAIL IF: A data-driven screen lacks loading, empty, error, success, or partial states."
+      },
+      {
+        "titleVI": "Empty state hướng dẫn",
+        "descriptionEN": "FAIL IF: The empty state only says “No data” without a reason and an action."
+      },
+      {
+        "titleVI": "Lỗi cụ thể",
+        "descriptionEN": "FAIL IF: An error only says “Something went wrong” without a cause and a recovery action."
+      },
+      {
+        "titleVI": "Giữ dữ liệu nhập",
+        "descriptionEN": "FAIL IF: Validation or network errors discard entered data."
+      },
+      {
+        "titleVI": "Ngăn lỗi trước khi sửa",
+        "descriptionEN": "FAIL IF: A destructive action lacks confirmation/undo, or a long form validates only after submission."
+      },
+      {
+        "titleVI": "Control khớp trạng thái",
+        "descriptionEN": "FAIL IF: Submit remains available while loading, or a disabled control has no explanation."
+      }
+    ]
+  },
+  "ia-labels": {
+    "nameVI": "Kiến trúc thông tin & nhãn",
+    "whenEN": "Use for navigation, settings, and screens with many items.",
+    "criteria": [
+      {
+        "titleVI": "Ngôn ngữ người dùng",
+        "descriptionEN": "FAIL IF: Labels use internal or technical terms such as “Entity” or “Sync object”."
+      },
+      {
+        "titleVI": "Một thuật ngữ, một nghĩa",
+        "descriptionEN": "FAIL IF: The same concept has at least two names within the flow, such as Order, Purchase, and Booking."
+      },
+      {
+        "titleVI": "Nhóm hợp lý",
+        "descriptionEN": "FAIL IF: Unrelated items share a group, or related items are scattered."
+      },
+      {
+        "titleVI": "Thông tin quyết định dễ tìm",
+        "descriptionEN": "FAIL IF: Price, deadline, or status is hidden behind a click or deep scrolling."
+      },
+      {
+        "titleVI": "Vị trí rõ ràng",
+        "descriptionEN": "FAIL IF: The screen lacks a title, active navigation, or step indicator."
+      }
+    ]
+  },
+  "content-truth": {
+    "nameVI": "Tính xác thực nội dung",
+    "whenEN": "Always run on AI-generated output to catch high-risk trust issues.",
+    "criteria": [
+      {
+        "titleVI": "Không sót placeholder",
+        "descriptionEN": "FAIL IF: Lorem ipsum, “John Doe”, “Acme”, $99.99, TODO, or stock images remain."
+      },
+      {
+        "titleVI": "Số liệu thật hoặc ghi rõ mẫu",
+        "descriptionEN": "FAIL IF: Metrics, percentages, ratings, testimonials, or “10,000+ users” have no source and are not marked as sample data."
+      },
+      {
+        "titleVI": "Copy cụ thể",
+        "descriptionEN": "FAIL IF: Generic copy such as “Unlock your potential” or “Seamless experience” could fit any app."
+      },
+      {
+        "titleVI": "Chi phí rõ trước khi xác nhận",
+        "descriptionEN": "FAIL IF: Fees, limits, auto-renewal, or data use appear only after commitment."
+      },
+      {
+        "titleVI": "Tuyên bố khớp hành vi",
+        "descriptionEN": "FAIL IF: The UI claims “Secure”, “Saved”, or “Done” before the system actually completes the action, such as a toast before the API response."
+      }
+    ]
+  },
+  "cognitive-load": {
+    "nameVI": "Tải nhận thức",
+    "whenEN": "Use for long forms, dashboards, multi-step flows, and screens with many choices.",
+    "criteria": [
+      {
+        "titleVI": "Chia nhóm",
+        "descriptionEN": "FAIL IF: A long form or list has no groups or steps, or a group has more than roughly seven items without hierarchy."
+      },
+      {
+        "titleVI": "Giới hạn lựa chọn",
+        "descriptionEN": "FAIL IF: A decision presents many equal choices without a default or recommendation."
+      },
+      {
+        "titleVI": "Không cần ghi nhớ",
+        "descriptionEN": "FAIL IF: Users must remember codes, prices, or selections from an earlier screen."
+      },
+      {
+        "titleVI": "Hệ thống xử lý độ phức tạp",
+        "descriptionEN": "FAIL IF: Users must enter information the system can infer or re-enter previously supplied data (WCAG 3.3.7 Redundant Entry)."
+      },
+      {
+        "titleVI": "Trợ giúp đúng lúc",
+        "descriptionEN": "FAIL IF: Instructions are concentrated at the beginning instead of inline where needed."
+      }
+    ]
+  },
+  "visual-hierarchy": {
+    "nameVI": "Phân cấp thị giác",
+    "whenEN": "Use when users miss the main CTA or the screen feels visually noisy.",
+    "criteria": [
+      {
+        "titleVI": "Một hành động chính",
+        "descriptionEN": "FAIL IF: At least two CTAs share the same visual weight, or the main CTA is not the most prominent element."
+      },
+      {
+        "titleVI": "Kiểm tra 5 giây",
+        "descriptionEN": "FAIL IF: After five seconds, users cannot say what the screen is for."
+      },
+      {
+        "titleVI": "Khoảng cách thể hiện quan hệ",
+        "descriptionEN": "FAIL IF: Spacing between unrelated items is no greater than spacing between related items, such as a label far from its input."
+      },
+      {
+        "titleVI": "Cùng chức năng, cùng style",
+        "descriptionEN": "FAIL IF: The same function uses different styles, or different functions look identical, such as links and ordinary text."
+      },
+      {
+        "titleVI": "Tiết chế nhấn mạnh",
+        "descriptionEN": "FAIL IF: More than two visual accents (bright colors, bold text, badges) compete in one viewport."
+      }
+    ]
+  },
+  "ai-visual-slop": {
+    "nameVI": "Trang trí AI thừa",
+    "whenEN": "Use for AI-generated output or template-heavy interfaces.",
+    "criteria": [
+      {
+        "titleVI": "Trang trí có mục đích",
+        "descriptionEN": "FAIL IF: A gradient, glow, blur, illustration, or emoji communicates no status, hierarchy, or action."
+      },
+      {
+        "titleVI": "Khung bao có lý do",
+        "descriptionEN": "FAIL IF: Cards are nested, or every item is a card without its own action."
+      },
+      {
+        "titleVI": "Phân tách vừa đủ",
+        "descriptionEN": "FAIL IF: Border, shadow, and background are combined when spacing alone is sufficient."
+      },
+      {
+        "titleVI": "Badge có ý nghĩa",
+        "descriptionEN": "FAIL IF: A badge or pill represents no status, category, or filter."
+      },
+      {
+        "titleVI": "Không dùng template mặc định",
+        "descriptionEN": "FAIL IF: The UI uses a default AI layout (gradient hero, three feature cards, circular icons) without a domain-specific reason."
+      }
+    ]
+  },
+  "design-system": {
+    "nameVI": "Design System",
+    "whenEN": "Use before handoff and when reviewing AI-generated code.",
+    "criteria": [
+      {
+        "titleVI": "Tái dùng component",
+        "descriptionEN": "FAIL IF: A new component is nearly identical to an existing one."
+      },
+      {
+        "titleVI": "Chỉ dùng token",
+        "descriptionEN": "FAIL IF: Color, spacing, radius, or shadow values are hardcoded rather than mapped to tokens."
+      },
+      {
+        "titleVI": "Hành vi nhất quán",
+        "descriptionEN": "FAIL IF: The same component behaves differently across screens."
+      },
+      {
+        "titleVI": "Ghi rõ ngoại lệ",
+        "descriptionEN": "FAIL IF: An exception has no documented reason."
+      }
+    ]
+  },
+  "responsive": {
+    "nameVI": "Responsive",
+    "whenEN": "Use before cross-device QA.",
+    "criteria": [
+      {
+        "titleVI": "Không tràn ngang",
+        "descriptionEN": "FAIL IF: There is horizontal scrolling at 320px, except for tables, maps, and code blocks."
+      },
+      {
+        "titleVI": "Nội dung tương đương",
+        "descriptionEN": "FAIL IF: Mobile hides content or functionality without an alternative access path."
+      },
+      {
+        "titleVI": "Giữ ưu tiên",
+        "descriptionEN": "FAIL IF: The main CTA is pushed to the bottom of the page on mobile."
+      },
+      {
+        "titleVI": "Kích thước chạm",
+        "descriptionEN": "FAIL IF: A target is smaller than 24×24 CSS px (WCAG 2.2 minimum); 44×44 is recommended."
+      },
+      {
+        "titleVI": "Zoom 200%",
+        "descriptionEN": "FAIL IF: The layout breaks or text is clipped at 200% zoom."
+      }
+    ]
+  },
+  "accessibility": {
+    "nameVI": "Khả năng tiếp cận",
+    "whenEN": "Use for every public-facing flow; required before release.",
+    "criteria": [
+      {
+        "titleVI": "Tương phản",
+        "descriptionEN": "FAIL IF: Text contrast is below 4.5:1, large text below 3:1, or UI/icon contrast below 3:1."
+      },
+      {
+        "titleVI": "Không chỉ dùng màu",
+        "descriptionEN": "FAIL IF: Status or errors are communicated by color alone."
+      },
+      {
+        "titleVI": "Tên truy cập",
+        "descriptionEN": "FAIL IF: Icon buttons lack labels, inputs only have placeholders, or images lack alt text."
+      },
+      {
+        "titleVI": "Bàn phím",
+        "descriptionEN": "FAIL IF: An element cannot be reached with Tab, focus is invisible or obscured by a sticky header (2.4.11), or there is a keyboard trap."
+      },
+      {
+        "titleVI": "Vận động & hoàn cảnh",
+        "descriptionEN": "FAIL IF: Interaction requires dragging or complex gestures without an alternative (2.5.7), or login requires puzzles or memorized codes (3.3.8)."
+      },
+      {
+        "titleVI": "Media & chuyển động",
+        "descriptionEN": "FAIL IF: Videos lack captions, or animation ignores prefers-reduced-motion."
+      }
+    ]
+  }
+}

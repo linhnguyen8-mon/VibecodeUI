@@ -1,3 +1,4 @@
+import { useOutsideDismiss } from "./hooks/useOutsideDismiss";
 import { useEffect, useState } from "react";
 import type { PointerEvent } from "react";
 import { Check, Pipette } from "lucide-react";
@@ -31,6 +32,7 @@ function ColorField({ entry, value, onChange, tokenOptions, resolveToken }: { en
   const [draft, setDraft] = useState(value);
   const [open, setOpen] = useState(false);
   const [tokenMenuOpen, setTokenMenuOpen] = useState(false);
+  const popoverRef = useOutsideDismiss<HTMLDivElement>(open || tokenMenuOpen, () => { setOpen(false); setTokenMenuOpen(false); });
   const [hsl, setHsl] = useState(() => hexToHsl(HEX.test(value) ? value : entry.fallback));
   useEffect(() => setDraft(value), [value]);
   useEffect(() => { if (HEX.test(value)) setHsl(hexToHsl(value)); }, [value]);
@@ -57,10 +59,10 @@ function ColorField({ entry, value, onChange, tokenOptions, resolveToken }: { en
     if (group) group.tokens.push(token); else groups.push({ name: groupName, tokens: [token] });
     return groups;
   }, []);
-  return <div className="color-token-row">
+  return <div ref={popoverRef} className="color-token-row">
     <div className="color-token-name"><strong>{entry.label}</strong>{entry.detail && <small>{entry.detail}</small>}</div>
     <div className="color-token-input">
-      {value.startsWith("ref:") ? <><span className="color-token-reference">{value.slice(4).replace("color.", "")}</span><button type="button" className="color-token-clear" aria-label={`Clear ${entry.label} token`} onClick={() => onChange(entry.fallback)}>×</button></> : <><button type="button" className="color-swatch-button" aria-label={`${entry.label} picker`} style={{ background: HEX.test(value) ? value : entry.fallback }} onClick={() => setOpen(current => !current)} /><input type="text" aria-label={`${entry.label} hex`} value={draft} maxLength={7} spellCheck={false} onChange={event => commit(event.target.value)} onBlur={() => { if (!HEX.test(draft)) setDraft(value); }} />{tokenOptions && <button type="button" className="color-token-source-arrow" aria-label={`Choose ${entry.label} token`} aria-expanded={tokenMenuOpen} onClick={() => setTokenMenuOpen(current => !current)}>⌄</button>}</>}
+      {value.startsWith("ref:") ? <><span className="color-token-reference">{value.slice(4).replace("color.", "")}</span><button type="button" className="color-token-clear" aria-label={`Clear ${entry.label} token`} onClick={() => onChange(entry.fallback)}>×</button></> : <><button type="button" className="color-swatch-button" aria-label={`${entry.label} picker`} style={{ background: HEX.test(value) ? value : entry.fallback }} onClick={() => { setTokenMenuOpen(false); setOpen(current => !current); }} /><input type="text" aria-label={`${entry.label} hex`} value={draft} maxLength={7} spellCheck={false} onChange={event => commit(event.target.value)} onBlur={() => { if (!HEX.test(draft)) setDraft(value); }} />{tokenOptions && <button type="button" className="color-token-source-arrow" aria-label={`Choose ${entry.label} token`} aria-expanded={tokenMenuOpen} onClick={() => { setOpen(false); setTokenMenuOpen(current => !current); }}>⌄</button>}</>}
     </div>
     {tokenMenuOpen && tokenOptions && <div className="color-token-menu" role="listbox" aria-label={`${entry.label} color tokens`}>{tokenGroups.map(group => <section className="color-token-menu-group" key={group.name}><h4>{group.name}</h4>{group.tokens.map(token => { const selected = value === `ref:${token}`; const color = resolveToken?.(token) ?? entry.fallback; return <button type="button" role="option" aria-selected={selected} className="color-token-menu-option" key={token} onClick={() => { onChange(`ref:${token}`); setTokenMenuOpen(false); }}><span className="color-token-menu-swatch" style={{ background: color }} />{token.replace("color.", "")}{selected && <Check size={14} />}</button>; })}</section>)}</div>}
     {open && <div className="color-picker-popover" role="dialog" aria-label={`${entry.label} color picker`}>

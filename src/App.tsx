@@ -1,23 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import {
-  BookOpen,
   Boxes,
-  CircleDot,
   Clipboard,
   ChevronLeft,
   ChevronRight,
   Download,
-  Play,
   Search,
-  SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
 import { loadMockLibraryData } from "./data/libraryData";
+import { MotionLibraryPage } from "./motion/MotionLibraryPage";
 import { ComponentGallery } from "./ComponentGallery";
 import { DesignSystemSidebar } from "./LayoutSidebar";
 import { elevationCss, getElevation, getLayout } from "./lib/layout";
-import type { AnimationPrompt, ButtonSize, ComponentPrompt, DesignSystem, PreviewCategory } from "./types";
+import type { ButtonSize, ComponentPrompt, DesignSystem, PreviewCategory } from "./types";
 import { getButtonSize } from "./lib/button";
 import { tokenValue } from "./lib/tokens";
 import { SkillWorkspace } from "./SkillWorkspace";
@@ -26,7 +23,6 @@ import { gradientPresetStyle } from "./lib/gradient";
 import { getBadge } from "./lib/badge";
 import { getSpacingAliases, getSpacingScale } from "./lib/spacing";
 import {
-  createAnimationPrompt,
   createDesignSystemPrompt,
   downloadPrompt,
   findResource,
@@ -47,7 +43,6 @@ export function App() {
   const [toast, setToast] = useState<Toast>(null);
   const [selectedDsId, setSelectedDsId] = useState("ds-fintech-calm");
   const [selectedComponentId, setSelectedComponentId] = useState("component-primary-button");
-  const [selectedAnimationId, setSelectedAnimationId] = useState("animation-dialog-enter");
 
   useEffect(() => {
     try {
@@ -61,11 +56,6 @@ export function App() {
     setQualityState((current) => current.filters.query === query ? current : { ...current, filters: { ...current.filters, query } });
   }, [query]);
 
-  const counts = {
-    "design-system": data.designSystems.length,
-    animation: data.animations.length,
-    principle: data.principles.length,
-  };
 
   return (
     <div className="app-shell">
@@ -76,20 +66,20 @@ export function App() {
             <strong>Design system</strong>
             <span className="version-chip">v2.4.0</span>
           </div>
-          <label className="search-box">
+          {view !== "animation" && <label className="search-box">
             <Search size={18} />
             <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={view === "principle" ? "Search skills..." : "Tìm kiếm design system, animation..."} />
-          </label>
+          </label>}
           <span className="avatar-chip">DS</span>
         </div>
         <nav className="nav-list" role="tablist" aria-label="Library sections">
-          <NavButton active={view === "design-system"} count={counts["design-system"]} icon={<BookOpen />} onClick={() => setView("design-system")}>
+          <NavButton active={view === "design-system"} onClick={() => setView("design-system")}>
             Design Systems
           </NavButton>
-          <NavButton active={view === "animation"} count={counts.animation} icon={<CircleDot />} onClick={() => setView("animation")}>
-            Animations
+          <NavButton active={view === "animation"} onClick={() => setView("animation")}>
+            Motion
           </NavButton>
-          <NavButton active={view === "principle"} count={counts.principle} icon={<SlidersHorizontal />} onClick={() => setView("principle")}>
+          <NavButton active={view === "principle"} onClick={() => setView("principle")}>
             Design Principles
           </NavButton>
         </nav>
@@ -114,12 +104,7 @@ export function App() {
           />
         )}
         {view === "animation" && (
-          <AnimationsPage
-            query={query}
-            selectedId={selectedAnimationId}
-            onSelect={setSelectedAnimationId}
-            onToast={setToast}
-          />
+          <MotionLibraryPage />
         )}
         {view === "principle" && <SkillWorkspace query={query} onQueryChange={setQuery} state={qualityState} onStateChange={setQualityState} storageWarning={storageWarning} onToast={setToast} />}
       </main>
@@ -132,23 +117,17 @@ export function App() {
 function NavButton({
   active,
   children,
-  count,
   disabled,
-  icon,
   onClick,
 }: {
   active?: boolean;
   children: string;
-  count: number;
   disabled?: boolean;
-  icon: ReactNode;
   onClick?: () => void;
 }) {
   return (
     <button className={active ? "nav-button active" : "nav-button"} role="tab" aria-selected={active} tabIndex={active ? 0 : -1} disabled={disabled} onClick={onClick}>
-      {icon}
       <span>{children}</span>
-      <small>{count}</small>
     </button>
   );
 }
@@ -436,131 +415,6 @@ function ComponentPreview({ component, state, variant }: { component: ComponentP
           {loading ? "Loading..." : component.name}
         </button>
       )}
-    </div>
-  );
-}
-
-function AnimationsPage({
-  query,
-  selectedId,
-  onSelect,
-  onToast,
-}: {
-  query: string;
-  selectedId: string;
-  onSelect: (id: string) => void;
-  onToast: (toast: Toast) => void;
-}) {
-  const filtered = searchResources(data, query, ["animation"]).filter((item): item is AnimationPrompt => item.type === "animation");
-  const seed = data.animations.find((animation) => animation.id === selectedId) ?? data.animations[0];
-  const [working, setWorking] = useState<AnimationPrompt>(structuredClone(seed));
-  const [runId, setRunId] = useState(0);
-
-  useEffect(() => {
-    setWorking(structuredClone(seed));
-  }, [seed]);
-
-  return (
-    <section className="animations-page">
-      <SectionHeader
-        eyebrow="Module 4"
-        title="Animations & Motion Prompt Catalog"
-        subtitle="Preview co replay, tinh chinh motion parameters va prompt luon ton trong prefers-reduced-motion."
-      />
-      <div className="motion-metrics">
-        <span><strong>{data.animations.length}</strong> motion presets</span>
-        <span><strong>120-320ms</strong> duration range</span>
-        <span><strong>CSS / Framer</strong> engine hints</span>
-      </div>
-      <div className="animation-layout">
-        <div className="animation-grid">
-          {filtered.map((animation) => (
-            <button className={animation.id === working.id ? "animation-card selected" : "animation-card"} key={animation.id} onClick={() => onSelect(animation.id)}>
-              <span className="source-chip">{animation.intensity}</span>
-              <strong>{animation.name}</strong>
-              <p>{animation.description}</p>
-              <MiniAnimation animation={animation} runId={0} />
-            </button>
-          ))}
-        </div>
-        <aside className="detail-pane">
-          <PanelTitle icon={<Sparkles />} title={working.name} subtitle={`${working.targetElement} / ${working.purpose}`} />
-          <div className="motion-stage">
-            <MiniAnimation animation={working} runId={runId} large />
-            <button className="primary-action" onClick={() => setRunId((value) => value + 1)}>
-              <Play size={16} /> Replay
-            </button>
-          </div>
-          <AnimationControls animation={working} onChange={setWorking} />
-          <PromptBox title="Generated motion prompt" value={createAnimationPrompt(working)} onToast={onToast} filename={`${working.id}-prompt`} />
-        </aside>
-      </div>
-    </section>
-  );
-}
-
-function AnimationControls({ animation, onChange }: { animation: AnimationPrompt; onChange: (animation: AnimationPrompt) => void }) {
-  const update = (patch: Partial<AnimationPrompt["previewParameters"]>) => {
-    onChange({ ...animation, previewParameters: { ...animation.previewParameters, ...patch } });
-  };
-
-  return (
-    <div className="control-card">
-      <label>
-        Duration: {animation.previewParameters.durationMs}ms
-        <input type="range" min={80} max={520} step={20} value={animation.previewParameters.durationMs} onChange={(event) => update({ durationMs: Number(event.target.value) })} />
-      </label>
-      <label>
-        Distance: {animation.previewParameters.distance}px
-        <input type="range" min={0} max={80} step={2} value={animation.previewParameters.distance} onChange={(event) => update({ distance: Number(event.target.value) })} />
-      </label>
-      <label>
-        Easing
-        <select value={animation.previewParameters.easing} onChange={(event) => update({ easing: event.target.value })}>
-          <option value="ease-out">ease-out</option>
-          <option value="ease-in-out">ease-in-out</option>
-          <option value="cubic-bezier(0.16, 1, 0.3, 1)">calm spring</option>
-          <option value="linear">linear</option>
-        </select>
-      </label>
-      <label>
-        Direction
-        <select value={animation.previewParameters.direction} onChange={(event) => update({ direction: event.target.value })}>
-          <option value="scale-fade">scale-fade</option>
-          <option value="slide-up">slide-up</option>
-          <option value="up-fade">up-fade</option>
-          <option value="lift">lift</option>
-          <option value="vertical">vertical</option>
-          <option value="scale">scale</option>
-        </select>
-      </label>
-    </div>
-  );
-}
-
-function MiniAnimation({ animation, large, runId }: { animation: AnimationPrompt; large?: boolean; runId: number }) {
-  const style = {
-    "--duration": `${animation.previewParameters.durationMs}ms`,
-    "--distance": `${animation.previewParameters.distance}px`,
-    "--easing": animation.previewParameters.easing,
-  } as CSSProperties;
-  return (
-    <div className={large ? "mini-animation large" : "mini-animation"} style={style} key={`${animation.id}-${runId}-${animation.previewParameters.durationMs}-${animation.previewParameters.distance}`}>
-      <div className={`motion-object ${animation.previewParameters.direction}`}>
-        {animation.targetElement === "list" ? (
-          <>
-            <span>Item 01</span><span>Item 02</span><span>Item 03</span>
-          </>
-        ) : animation.targetElement === "toast" ? (
-          <span>Saved prompt</span>
-        ) : animation.targetElement === "button" ? (
-          <button>Click thu nghiem</button>
-        ) : animation.targetElement === "card" ? (
-          <span>Micro card UI</span>
-        ) : (
-          <span>{animation.name}</span>
-        )}
-      </div>
     </div>
   );
 }

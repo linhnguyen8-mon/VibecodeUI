@@ -1,8 +1,12 @@
+import { skills } from "./skills";
+import { auditSets } from "./auditSets";
 import type { ProjectContext } from "./projectContext";
 
 export const STORAGE_KEY = "design_quality_state_v1";
 
 export type SkillValues = Record<string, Record<string, string | string[]>>;
+export type CriterionReview = { checked: boolean; status: "" | "pass" | "fail" | "review" | "na"; note: string };
+export type ReviewState = Record<string, Record<string, CriterionReview>>;
 export type CriteriaState = Record<string, Record<string, boolean>>;
 export type WorkspaceFilters = {
   query: string;
@@ -19,6 +23,7 @@ export type DesignQualityState = {
   selectedSkillId: string;
   skillInputs: SkillValues;
   selectedCriteria: CriteriaState;
+  criterionReviews: ReviewState;
   filters: WorkspaceFilters;
   theme: "light";
   auditSetConfig: AuditSetConfig;
@@ -27,9 +32,10 @@ export type DesignQualityState = {
 export const defaultDesignQualityState: DesignQualityState = {
   version: 1,
   projectContext: {},
-  selectedSkillId: "visual-hierarchy",
+  selectedSkillId: "heuristic-sweep",
   skillInputs: {},
   selectedCriteria: {},
+  criterionReviews: {},
   filters: { query: "", group: "All groups", stage: "All stages", scope: "All scopes", selectedProblems: [], quickFilter: null },
   theme: "light",
   auditSetConfig: { activeSetId: null, skillsBySet: {} },
@@ -59,8 +65,13 @@ export function loadDesignQualityState(): { state: DesignQualityState; available
       state: {
         ...defaultDesignQualityState,
         ...parsed,
+        criterionReviews: isRecord(parsed.criterionReviews) ? parsed.criterionReviews as ReviewState : {},
+        selectedSkillId: skills.some(skill => skill.id === parsed.selectedSkillId) ? parsed.selectedSkillId! : "heuristic-sweep",
         filters: { ...defaultDesignQualityState.filters, ...parsed.filters },
-        auditSetConfig: { ...defaultDesignQualityState.auditSetConfig, ...parsed.auditSetConfig },
+        auditSetConfig: {
+          activeSetId: auditSets.some(set => set.id === parsed.auditSetConfig?.activeSetId) ? parsed.auditSetConfig!.activeSetId : null,
+          skillsBySet: Object.fromEntries(Object.entries(parsed.auditSetConfig?.skillsBySet ?? {}).filter(([id]) => auditSets.some(set => set.id === id)).map(([id, members]) => [id, members.filter(member => skills.some(skill => skill.id === member))])),
+        },
       },
       available: true,
     };

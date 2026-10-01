@@ -1,0 +1,21 @@
+---
+description: All Motion Library previews use abstract skeleton scenes
+globs: "src/motion/**/*"
+alwaysApply: false
+---
+
+# Motion preview convention
+
+- Every preview, in both preset cards and the detail panel, must use skeleton shapes.
+- Represent titles and descriptions with rounded bars, images with neutral blocks, and icons with simple geometric placeholders.
+- Do not put sample copy, photos, illustrations, emoji or decorative symbols inside preview scenes. For example, a button contains a short pale bar, never “Continue”.
+- Semantic status icons are allowed when the motion demonstrates that state (for example, a completion check after progress finishes). Keep labels as skeleton bars.
+- Preserve each scene’s recognizable structure: content has an image and sections; navigation has a sidebar and richer modal fields; buttons retain their surface and shadow.
+- Animate the intended elements using the shared runtime config. Do not add shimmer to static skeleton placeholders unless the preset specifically demonstrates shimmer.
+- Keep real preset names, filter labels, control labels, prompts and accessible names outside the scene readable.
+- Hover Lift belongs to Card only, not Button.
+- Keep default motion duration at 400ms unless the user explicitly changes it.
+
+- Card controls expose semantic parameters only (spread, depth, direction, threshold, scale, timing). Preview and generated prompt derive from one resolved runtime config; never export sampled preview transforms as implementation instructions.
+
+- Keep preview heights identical across presets within the grid, and identical across presets in the detail panel. Clip oversized scenes inside the shared bounds; never enlarge one preset’s preview. Stack Fan Swipe uses tall cards with their lower tails clipped.
