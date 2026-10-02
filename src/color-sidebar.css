@@ -5,9 +5,9 @@
 .color-group-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
 .color-group-head h3 { margin:0; }
 .color-token-row { display:flex; align-items:center; justify-content:space-between; min-height:44px; gap:10px; }
-.color-token-row select { width:132px; min-height:30px; padding:4px 8px; border:1px solid #cbd5e1; border-radius:6px; background:#fff; color:#263449; font-size:10px; }
+.color-token-row select { width:132px; min-height:30px; padding:4px 8px; border:1px solid #cbd5e1; border-radius:6px; background:#fff; color:#263449; font-size:var(--type-xs,11px); }
 .color-border-mode button { min-width:0; padding-inline:7px; }
-.color-border-width { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:50px; color:#263449; font-size:12px; }
+.color-border-width { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:50px; color:#263449; font-size:var(--type-sm,12px); }
 .color-border-width > span:first-child strong, .color-border-width > span:first-child small { display:block; }
 .color-border-width > span:first-child small { margin-top:2px; color:#93a0b1; font-size:10px; }
 .color-border-width > span:last-child { display:flex; align-items:center; width:92px; height:30px; padding-right:8px; border:1px solid #cbd5e1; border-radius:6px; background:#fff; }
@@ -15,7 +15,7 @@
 .color-border-width > span:last-child small { color:#93a0b1; font:10px ui-monospace,monospace; }
 .color-group > .color-group { padding:10px 0 0; border:0; }
 .color-token-name { min-width:0; }
-.color-token-name strong { display:block; font-size:12px; font-weight:500; line-height:1.4; }
+.color-token-name strong { display:block; font-size:var(--type-sm,12px); font-weight:500; line-height:1.4; }
 .color-token-name small { display:block; color:#93a0b1; font-size:10px; line-height:1.4; }
 .color-token-input { display:flex; align-items:center; flex:0 0 112px; height:30px; padding:2px; border:1px solid #cbd5e1; border-radius:6px; background:white; }
 .color-token-input:focus-within { border-color:#2457c5; box-shadow:0 0 0 2px #2457c51f; }
@@ -27,7 +27,7 @@
 .color-token-input select { width:72px; min-width:0; border:0; outline:0; background:transparent; color:#263449; font:500 9px ui-monospace,monospace; }
 .color-picker-popover { position:absolute; z-index:20; width:286px; margin-top:8px; padding:14px; border:1px solid #d8e0ea; border-radius:10px; background:#fff; box-shadow:0 14px 32px #1b2b451f, 0 3px 8px #1b2b4514; }
 .color-token-row { position:relative; }
-.color-picker-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#172033; font-size:12px; }
+.color-picker-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; color:#172033; font-size:var(--type-sm,12px); }
 .color-picker-head button, .color-picker-tools > button { display:grid; place-items:center; width:28px; height:28px; padding:0; border:1px solid #d8e0ea; border-radius:6px; background:#fff; color:#52647d; cursor:pointer; }
 .color-picker-head button:hover, .color-picker-tools > button:hover { color:#2457c5; border-color:#2457c5; }
 .color-picker-square { position:relative; height:142px; overflow:hidden; border-radius:6px; cursor:crosshair; background-image:linear-gradient(to right,#fff,transparent),linear-gradient(to top,#000,transparent); }
@@ -43,7 +43,7 @@
 .color-picker-values input { width:100%; min-width:0; height:28px; padding:4px 6px; border:1px solid #d8e0ea; border-radius:5px; color:#172033; font:500 10px ui-monospace,monospace; }
 .color-picker-values span { color:#8290a4; font:500 8px ui-monospace,monospace; text-align:center; }
 .color-segment { display:inline-flex; flex-shrink:0; gap:2px; padding:3px; background:#f1f5f9; border-radius:6px; }
-.color-segment button { min-width:25px; min-height:23px; padding:3px 7px; border:0; border-radius:4px; background:transparent; color:#64748b; font-size:10px; }
+.color-segment button { min-width:25px; min-height:23px; padding:3px 7px; border:0; border-radius:4px; background:transparent; color:#64748b; font-size:var(--type-xs,11px); }
 .color-segment button[aria-pressed=true] { background:white; color:#2457c5; box-shadow:0 1px 3px #0f172a1c; }
 .color-tabs { padding:2px; gap:0; }
 .color-tabs button { min-width:48px; padding-inline:8px; }

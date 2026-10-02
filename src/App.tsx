@@ -314,6 +314,7 @@ function DesignSystemPreview({ ds, buttonSize, onButtonSizeChange, previewCatego
         "--radius-control": `${ds.foundations.radiusScale[1] ?? layout.controlRadius}px`,
         "--radius-surface": `${ds.foundations.radiusScale[2] ?? layout.cardRadius}px`,
         "--radius-overlay": `${ds.foundations.radiusScale[3] ?? layout.cardRadius}px`,
+        "--radius-pill": `${Math.max(...ds.foundations.radiusScale, layout.cardRadius)}px`,
         "--density": compact ? .72 : ds.foundations.density === "spacious" ? 1.28 : 1,
         "--pad": compact ? "12px" : ds.foundations.density === "spacious" ? "24px" : "18px",
         "--success": statusSuccess,
@@ -325,6 +326,25 @@ function DesignSystemPreview({ ds, buttonSize, onButtonSizeChange, previewCatego
       <ComponentGallery key={ds.id} ds={ds} buttonSize={buttonSize} onButtonSizeChange={onButtonSizeChange} previewCategory={previewCategory} onPreviewCategoryChange={onPreviewCategoryChange} />
     </div>
   );
+}
+
+function getDesignSystemStyle(ds: DesignSystem): CSSProperties {
+  const layout = getLayout(ds);
+  return {
+    "--brand": tokenValue(ds, "color.brand.primary"),
+    "--surface": tokenValue(ds, "color.surface.default"),
+    "--page": tokenValue(ds, "color.background.page"),
+    "--soft": tokenValue(ds, "color.surface.soft"),
+    "--text": tokenValue(ds, "color.text.primary"),
+    "--text-secondary": tokenValue(ds, "color.text.secondary"),
+    "--border": tokenValue(ds, "color.border.default"),
+    "--font-family": ds.foundations.fontFamily,
+    "--body-size": `${ds.foundations.bodySize}px`,
+    "--heading-size": `${ds.foundations.headingSize}px`,
+    "--radius": `${layout.cardRadius}px`,
+    "--layout-control-radius": `${layout.controlRadius}px`,
+    "--layout-card-radius": `${layout.cardRadius}px`,
+  } as CSSProperties;
 }
 
 function ComponentsPage({
@@ -340,6 +360,7 @@ function ComponentsPage({
 }) {
   const filtered = searchResources(data, query, ["component"]).filter((item): item is ComponentPrompt => item.type === "component");
   const selected = data.components.find((component) => component.id === selectedId) ?? data.components[0];
+  const activeDs = data.designSystems.find((ds) => ds.id === "ds-fintech-calm") ?? data.designSystems[0];
   const [prompt, setPrompt] = useState(selected.promptText);
   const [variant, setVariant] = useState(selected.previewConfig.defaultVariant);
   const [state, setState] = useState(selected.states[0]);
@@ -349,12 +370,12 @@ function ComponentsPage({
   }
 
   return (
-    <section className="page-grid component-grid">
+    <section className="page-grid component-grid" style={getDesignSystemStyle(activeDs)}>
       <div className="content-pane">
         <SectionHeader
           eyebrow="Module 2"
-          title="Component Prompt Catalog"
-          subtitle="Duyet component, xem demo, anatomy, variants/states va chinh prompt truc tiep."
+          title="Component library"
+          subtitle="Chọn component để xem biến thể, trạng thái và chỉnh sửa prompt."
         />
         <div className="resource-grid">
           {filtered.map((component) => (

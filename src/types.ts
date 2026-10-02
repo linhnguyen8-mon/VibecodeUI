@@ -136,6 +136,20 @@ export interface DesignSystem {
   };
   designPrinciples?: { goal: string; do: string[]; dont: string[] };
   domainRules?: { coreObjects: string[]; importantActions: string[]; specialComponents: string[]; businessRules: string[] };
+  designAssets?: DesignAsset[];
+}
+
+export interface DesignAsset {
+  id: string;
+  name: string;
+  type: "screen-template" | "component-pattern";
+  priority: "core" | "supporting";
+  purpose: string;
+  composition: string[];
+  responsiveNotes: string[];
+  figmaNodeIds: string[];
+  screenKey?: "home-roadmap" | "practice-question" | "practice-feedback" | "streak" | "translator-input" | "translator-result" | "survey-source";
+  previewImage?: string;
 }
 
 export interface ComponentPrompt {

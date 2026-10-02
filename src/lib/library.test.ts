@@ -27,6 +27,51 @@ describe("library fixtures", () => {
     expect(createDesignSystemPrompt(ds)).toContain("color.brand.primary: #123456");
   });
 
+  it("references Apple HIG as supplemental platform guidance", () => {
+    const prompt = createDesignSystemPrompt(data.designSystems[0]);
+    expect(prompt).toContain("https://developer.apple.com/design/human-interface-guidelines/");
+    expect(prompt).toContain("do not force iOS-specific controls or conventions onto responsive web");
+    expect(prompt).toContain("must not override explicit product behavior or introduce unrepresented design values");
+  });
+
+  it("requires real interface implementation and treats Figma as reference material", () => {
+    const prompt = createDesignSystemPrompt(data.designSystems[0]);
+    expect(prompt).toContain("implement the actual working user-facing screens in the existing project");
+    expect(prompt).toContain("A Design System editor, prompt customizer, preview, Figma reference, screenshot, or documentation is not a substitute");
+    expect(prompt).toContain("Access to Figma has been authorized for this project");
+    expect(prompt).toContain("Required outcome for an interface task: implement the requested user-facing UI and interactions in the existing codebase");
+  });
+
+  it("generates Figma-backed Elevo templates and tokens for the language-learning preset", () => {
+    const elevoLearning = structuredClone(data.designSystems[1]);
+    const prompt = createDesignSystemPrompt(elevoLearning);
+    expect(prompt).toContain("Practice activities:");
+    expect(prompt).toContain("use the Elevo AI Learning values resolved in this prompt as the source of truth");
+    expect(prompt).toContain("Figma-observed visual anchors: primary #59C8FF");
+    expect(prompt).toContain("## 06. PRESET DESIGN ASSETS");
+    expect(prompt).toContain("### Learning home and roadmap (screen-template; core priority)");
+    expect(prompt).toContain("### Login, signup, and recovery (screen-template; core priority)");
+    expect(prompt).toContain("node-id=6164-138971");
+    expect(prompt).not.toContain("Assignment panel:");
+    const selectedScreens = elevoLearning.designAssets?.filter(asset => asset.type === "screen-template" && asset.screenKey) ?? [];
+    expect(selectedScreens).toHaveLength(7);
+    expect(selectedScreens.every(asset => !asset.previewImage)).toBe(true);
+    expect(selectedScreens.map(asset => asset.figmaNodeIds[0])).toEqual([
+      "6164:155012", "6164:152004", "6164:151840", "6164:155324", "6164:136648", "6164:137045", "6164:138427",
+    ]);
+    const componentAssets = elevoLearning.designAssets?.filter(asset => asset.type === "component-pattern") ?? [];
+    expect(componentAssets.map(asset => asset.figmaNodeIds[0])).toContain("40000072:1196");
+    expect(componentAssets[0].previewImage).toBe("/assets/elevo/elevo-component-assets.png");
+    expect(prompt).toContain("Elevo component assets: raised cyan primary CTA with diagonal sheen");
+    expect(tokenValue(elevoLearning, "shadow.button.primary")).toBe("0 4px 0 #3E8CB2");
+    expect(tokenValue(elevoLearning, "radius.button")).toBe("16px");
+    expect(tokenValue(elevoLearning, "spacing.button.padding-x")).toBe("24px");
+
+    const calmFinancePrompt = createDesignSystemPrompt(data.designSystems[0]);
+    expect(calmFinancePrompt).toContain("Subscription form:");
+    expect(calmFinancePrompt).not.toContain("AI Learning Hub");
+  });
+
   it("always includes reduced motion in animation prompts", () => {
     const prompt = createAnimationPrompt(data.animations[0]);
     expect(prompt.toLowerCase()).toContain("prefers-reduced-motion");
