@@ -2,7 +2,9 @@ import type { AnimationPrompt, DesignSystem, LibraryData, LibraryResource, Resou
 import { buttonSizeOrder, getButtonSize } from "./button";
 import { elevationCss, elevationLabels, getElevation, getLayout } from "./layout";
 import { getTypography, typeRoles } from "./typography";
-import { resolvedTokens } from "./tokens";
+import { tokenDefinition } from "./designTokens";
+import { referenceName } from "./tokenGraph";
+import { resolvedTokens, tokenValue } from "./tokens";
 import { getBadge } from "./badge";
 import { getSpacingAliases, getSpacingScale, spacingReference, spacingTokenNames } from "./spacing";
 
@@ -55,7 +57,15 @@ export function createDesignSystemPrompt(ds: DesignSystem): string {
   const spacingAliases = getSpacingAliases(ds);
   const allTokens = resolvedTokens(ds);
   const spacingNames = new Set(spacingTokenNames.map(name => `spacing.${name}`));
-  const tokenLines = allTokens.filter(token => !spacingNames.has(token.name)).map((token) => `- ${token.name}: ${token.value}`).join("\n");
+  const binding = (name: string, fallback: string) => {
+    if (!ds.tokenModelVersion) return fallback;
+    const source = ds.tokens.find(token => token.name === name);
+    const resolved = allTokens.find(token => token.name === name)?.value ?? fallback;
+    const ref = referenceName(source?.override ?? source?.value ?? '');
+    return ref ? `{${ref}} (${resolved})` : resolved;
+  };
+  const tokenLine = (token: typeof allTokens[number]) => `- ${token.name}: ${token.value}${ds.tokenModelVersion && referenceName(ds.tokens.find(t => t.name === token.name)?.override ?? ds.tokens.find(t => t.name === token.name)?.value ?? '') ? ` ← ${binding(token.name,token.value)}` : ''}`;
+  const tokenLines = allTokens.filter(token => !spacingNames.has(token.name) && (!ds.tokenModelVersion || tokenDefinition(token).layer === 'Semantic')).map(tokenLine).join("\n");
   const context = ds.projectContext ?? {
     product: ds.name,
     domain: ds.industryTags.join(" / "),
@@ -75,25 +85,25 @@ export function createDesignSystemPrompt(ds: DesignSystem): string {
     businessRules: [ds.promptText],
   };
   const primitiveValues = [...new Set(allTokens.filter(token => token.category !== "spacing").map(token => token.value))];
-  const primitiveLines = primitiveValues.map((value, index) => `- primitive.value.${String(index + 1).padStart(2, "0")}: ${value}`).join("\n");
+  const primitiveLines = ds.tokenModelVersion ? allTokens.filter(token => token.category !== "spacing" && tokenDefinition(token).layer === "Primitive").map(tokenLine).join("\n") : primitiveValues.map((value, index) => `- primitive.value.${String(index + 1).padStart(2, "0")}: ${value}`).join("\n");
   const spacingPrimitiveLines = spacingTokenNames.map(name => `- spacing.${name}: ${spacingScale[name]}px`).join("\n");
-  const componentTokens = [
+  const componentTokens = ds.tokenModelVersion ? allTokens.filter(token => tokenDefinition(token).layer === "Component").map(tokenLine).join("\n") : [
     "- button.md.height → control.height.md",
     "- button.primary.background → color.brand.primary",
     ...buttonSizeOrder.flatMap(size => {
       const button = getButtonSize(ds, size);
       const key = size.toLowerCase();
       return [
-        `- button.${key}.padding-x → ${spacingReference(button.paddingXToken!)}`,
-        `- button.${key}.padding-y → ${spacingReference(button.paddingYToken!)}`,
-        `- button.${key}.icon-gap → ${spacingReference(button.iconGapToken!)}`,
+        `- button.${key}.padding-x → ${binding(`foundation.buttonSizes.${size}.paddingX`, spacingReference(button.paddingXToken!))}`,
+        `- button.${key}.padding-y → ${binding(`foundation.buttonSizes.${size}.paddingY`, spacingReference(button.paddingYToken!))}`,
+        `- button.${key}.icon-gap → ${binding(`foundation.buttonSizes.${size}.iconGap`, spacingReference(button.iconGapToken!))}`,
       ];
     }),
     "- card.padding → spacing.card.padding",
-    "- card.radius → radius.surface",
+    "- card.radius → radius.card",
     "- badge.height → control.height.badge",
     "- badge.radius → radius.badge",
-    `- badge.padding-x → ${spacingReference(badge.paddingXToken!)}`,
+    `- badge.padding-x → ${binding("foundation.badge.paddingX", spacingReference(badge.paddingXToken!))}`,
   ].join("\n");
   const isElevoLearning = ds.id === "ds-learning-bright";
   const previewSpecimens = isElevoLearning ? [
@@ -145,17 +155,18 @@ export function createDesignSystemPrompt(ds: DesignSystem): string {
     "## 02. FOUNDATION SYSTEM",
     "### Color system",
     "- Brand: primary, secondary, tertiary; neutral surfaces and content; functional success, warning, danger, and info.",
-    "- Neutral source: color.neutral.base generates color.neutral.50–950. Map light page to neutral.50, soft/gradient page to neutral.100, surface.default/elevated to neutral.50, surface.tertiary to neutral.100, surface.soft to neutral.200, text.primary to neutral.950, text.secondary to neutral.600, text.disabled to neutral.400, border.divider to neutral.100, and borders to neutral.200–300. Components must consume these semantic tokens, never hardcode neutral colors.",
+    "- Neutral source: color.neutral.base generates color.neutral.50–950. Preserve the current semantic references and overrides listed below; do not remap them to guessed shades.",
+    "- Outline buttons use the semantic border color and a minimum 1px border, even when the general border width is zero.",
     "- Semantic tokens are the only color interface components may use. Include default, hover, active, disabled, focus, and on-color states where applicable.",
     "- Page/surface/elevated backgrounds; primary/secondary/disabled/on-color/link content; default/hover/active/focus/disabled interactive colors; default/divider/hover/focus/selected/disabled borders; focus ring and overlay scrim.",
     `- Page background mode: ${ds.foundations.background?.mode ?? "soft"}${ds.foundations.background?.mode === "gradient" ? `; preset ${ds.foundations.background.profiles?.gradient.gradientPreset ?? "linear"}${ds.foundations.background.profiles?.gradient.gradientPreset === "linear" ? ` at ${ds.foundations.background.gradientAngle}deg using color.background.gradient-start and color.background.gradient-end` : ` layered aura over ${ds.foundations.background.profiles?.gradient.page}`}` : ""}. Keep content surfaces visually separated from the page canvas with mode-appropriate contrast and elevation.`,
     "- Available gradient presets: Linear, Sunrise Drift, Arctic Frost, and Eclipse Flare. Aura presets use two decorative, blurred CSS gradient layers behind content, blend against the page canvas, ignore pointer events, and must not cover content. Eclipse Flare uses hard-light/soft-light over its dark base and switches to multiply on a light base.",
-    "- Form layout wrappers are transparent and inherit background.page. The form container itself uses surface.default; nested controls use the configured secondary surfaces. On gradient pages, page-level labels use on-color content while labels inside the form use standard content tokens.",
+    "- The component gallery background uses color.surface.default. Form layout wrappers are transparent and inherit the gallery surface. The form container itself uses surface.default; nested fields use color.input.default, hover, selected and disabled for their respective states. On gradient pages, page-level labels use on-color content while labels inside the form use standard content tokens.",
     "- Background specimens must expose the hierarchy visually: page canvas → secondary surface 1 → two secondary surface 2 examples plus one elevated surface example. Each Light, Soft, and Gradient specimen reads only its own saved background profile.",
-    "- Segmented controls and tab tracks use surface.default; their selected items use surface.tertiary. Forms and modal bodies use surface.default; inputs/selects use surface.tertiary, while textarea and option cards use surface.soft. If only one secondary surface is enabled, surface.soft aliases surface.tertiary.",
+    "- Segmented controls and tab tracks use surface.default; their selected items use surface.tertiary. Forms and modal bodies use surface.default; inputs, selects, textarea and option cards use color.input.default; hover uses color.input.hover, focus or selection uses color.input.selected, and disabled uses color.input.disabled. If only one secondary surface is enabled, surface.soft aliases surface.tertiary.",
     "- Border usage: color.border.default for cards, inputs, selects, and default controls; color.border.divider for section, table-row, and list separators; color.border.selected for selected radio/checkbox, option cards, and selected items; color.border.hover for hoverable fields/cards/items; color.border.focus for keyboard-focused fields and controls; color.border.disabled for disabled inputs, buttons, and controls.",
     "- Navigation bar patterns: Pill with icon + text and icon-only variants; Normal with icon + text. Pill navigation uses a surface.default track with the active item on surface.tertiary; Normal navigation uses a transparent track and brand-colored active indicator. All items need accessible names and a clear selected state.",
-    "- Mobile login fields use surface.default so they remain distinct from the mobile page canvas; desktop form field mappings continue to use the configured secondary surfaces.",
+    "- Mobile and desktop fields share the color.input semantic state tokens.",
     "- Mobile chat uses surface.default for the header, assistant response bubbles, and message input. Suggestion buttons use surface.tertiary, remain keyboard focusable, and wrap within the mobile viewport.",
     "- Mobile settings groups user profile, account actions, and preferences into separate cards using surface.default; keep rows and dividers inside their parent card.",
     ...(ds.foundations.background?.profiles ? (["light", "soft", "gradient"] as const).map(mode => { const profile = ds.foundations.background!.profiles![mode]; return `- Background profile ${mode}: page ${profile.page}; surface ${profile.surface}; ${profile.surfaceLevels} secondary surface level${profile.surfaceLevels === 1 ? "" : "s"} (tertiary ${profile.tertiary}${profile.surfaceLevels === 2 ? `; soft ${profile.soft}` : "; soft aliases tertiary"}); elevated ${profile.elevated}${mode === "gradient" ? `; preset ${profile.gradientPreset ?? "linear"}${profile.gradientPreset === "linear" || !profile.gradientPreset ? `, ${profile.gradientStart} → ${profile.gradientEnd} at ${profile.gradientAngle}deg` : " aura layer settings from preset definition"}` : ""}.`; }) : []),
@@ -166,7 +177,7 @@ export function createDesignSystemPrompt(ds: DesignSystem): string {
     ...typeRoles.map(role => { const style = typography.roles[role]; return `  - ${role}: ${style.size}px / ${style.lineHeight} line height / ${style.weight} weight`; }),
     "### Spacing system",
     "- Base unit: 4px. Primitive variables use named Figma-style tokens: XS, S, M, L, XL, 1XL–6XL.",
-    `- Semantic mapping: page margin → ${spacingReference(spacingAliases.pageMargin)}; container padding → ${spacingReference(spacingAliases.containerPadding)}; section gap → ${spacingReference(spacingAliases.sectionGap)}; component gap → ${spacingReference(spacingAliases.componentGap)}; card padding → ${spacingReference(spacingAliases.cardPadding)}; element gap → ${spacingReference(spacingAliases.elementGap)}.`,
+    `- Semantic mapping: page margin → ${binding("spacing.page.margin", spacingReference(spacingAliases.pageMargin))}; container padding → ${binding("spacing.container.padding", spacingReference(spacingAliases.containerPadding))}; section gap → ${binding("spacing.section.gap", spacingReference(spacingAliases.sectionGap))}; component gap → ${binding("spacing.component.gap", spacingReference(spacingAliases.componentGap))}; card padding → ${binding("spacing.card.padding", spacingReference(spacingAliases.cardPadding))}; element gap → ${binding("spacing.element.gap", spacingReference(spacingAliases.elementGap))}.`,
     "### Layout system",
     `- Container max width: ${ds.foundations.contentWidth}; responsive grid; density: ${ds.foundations.density}. Density controls spacing, card padding, and component size.`,
     "- Breakpoints: small ≤ 640px, medium 641–1024px, large > 1024px; adapt layouts without horizontal page overflow.",
@@ -176,7 +187,7 @@ export function createDesignSystemPrompt(ds: DesignSystem): string {
     "### Elevation system",
     "- Levels L0–L4 map to z-index 0, 10, 20, 30, 40. Assign L1 to cards, L2 to floating elements, L3 to dropdowns/popovers, and L4 to modals/dialogs.",
     "- Resolved shadow values:",
-    ...elevation.map((level, index) => `  - L${index} ${elevationLabels[index]}: ${elevationCss(level)}; z-index ${level.zIndex ?? index * 10}`),
+    ...elevation.map((level, index) => `  - L${index} ${elevationLabels[index]}: ${index === 1 && ds.tokenModelVersion ? tokenValue(ds,"shadow.card") : elevationCss(level)}; z-index ${level.zIndex ?? index * 10}`),
     "",
     "## 03. TOKEN ARCHITECTURE",
     "### Layer 1 — Primitive tokens (raw values only)",
@@ -202,9 +213,9 @@ export function createDesignSystemPrompt(ds: DesignSystem): string {
     `- Density: ${ds.foundations.density}`,
     ...(isElevoLearning ? [
       "- Preset token source: use the Elevo AI Learning values resolved in this prompt as the source of truth; do not replace them with generic education defaults.",
-      "- Figma-observed visual anchors: primary #59C8FF; stronger blue #1AB3FF; page #FAFAFA; surface #FFFFFF; pale blue #F5FCFF; heading #171A1C; body #5D686F; divider #E3E6E8.",
-      "- Typography: Nunito for interface text; observed heading 32px, body 16px, and common labels 14px. Use the values resolved in this prompt when present.",
-      "- Shape and spacing anchors: 375x812 mobile screens; 16px horizontal screen padding; 8/12/16/24px common spacing; 12px input radius, 16px primary-button radius, and 24px card radius.",
+      `- Figma-observed visual anchors: primary ${tokenValue(ds,"color.brand.primary")}; surface ${tokenValue(ds,"color.surface.default")}; heading ${tokenValue(ds,"color.text.primary")}. Current edited values take precedence.`,
+      `- Typography: ${ds.foundations.fontFamily}; heading ${ds.foundations.headingSize}px and body ${ds.foundations.bodySize}px.`,
+      `- Shape: 375x812 mobile reference; current control radius ${layout.controlRadius}px and card radius ${layout.cardRadius}px. Use current spacing tokens.`,
       "- Recreate the linked Figma assets as structural references. Keep their mobile hierarchy, blue raised-button treatment, lesson progress, language selection, and persistent bottom navigation; adapt content only where the requested product requires it.",
       "- Do not use amber primary actions, classroom dashboards, teacher profiles, or assignment submission flows: those are not part of the observed Elevo screens.",
     ] : []),
@@ -214,19 +225,19 @@ export function createDesignSystemPrompt(ds: DesignSystem): string {
     `- Focus ring width: ${ds.foundations.focusRing?.width ?? 2}px`,
     `- Spacing scale: ${spacingTokenNames.map(name => `spacing.${name}`).join(", ")}`,
     `- Radius scale: ${ds.foundations.radiusScale.join(", ")}`,
-    `- Page margin: ${spacingReference(spacingAliases.pageMargin)}`,
-    `- Container padding: ${spacingReference(spacingAliases.containerPadding)}`,
-    `- Section gap: ${spacingReference(spacingAliases.sectionGap)}`,
-    `- Component gap: ${spacingReference(spacingAliases.componentGap)}`,
-    `- Card padding: ${spacingReference(spacingAliases.cardPadding)}`,
-    `- Element gap: ${spacingReference(spacingAliases.elementGap)}`,
+    `- Page margin: ${binding("spacing.page.margin", spacingReference(spacingAliases.pageMargin))}`,
+    `- Container padding: ${binding("spacing.container.padding", spacingReference(spacingAliases.containerPadding))}`,
+    `- Section gap: ${binding("spacing.section.gap", spacingReference(spacingAliases.sectionGap))}`,
+    `- Component gap: ${binding("spacing.component.gap", spacingReference(spacingAliases.componentGap))}`,
+    `- Card padding: ${binding("spacing.card.padding", spacingReference(spacingAliases.cardPadding))}`,
+    `- Element gap: ${binding("spacing.element.gap", spacingReference(spacingAliases.elementGap))}`,
     `- Control radius: ${layout.controlRadius}px`,
     `- Card radius: ${layout.cardRadius}px`,
     "- Elevation levels:",
-    ...elevation.map((level, index) => `  - L${index} ${elevationLabels[index]}: ${elevationCss(level)}; z-index ${level.zIndex ?? index * 10}`),
+    ...elevation.map((level, index) => `  - L${index} ${elevationLabels[index]}: ${index === 1 && ds.tokenModelVersion ? tokenValue(ds,"shadow.card") : elevationCss(level)}; z-index ${level.zIndex ?? index * 10}`),
     "- Button sizes:",
-    ...buttonSizeOrder.map(size => { const button = getButtonSize(ds, size); return `  - ${size}: height ${button.height}px; font ${button.fontSize}px/${button.fontWeight}; padding ${spacingReference(button.paddingYToken!)} ${spacingReference(button.paddingXToken!)}; icon padding left/right ${spacingReference(button.iconPaddingLeftToken!)}/${spacingReference(button.iconPaddingRightToken!)}; icon gap ${spacingReference(button.iconGapToken!)}; icon size ${button.iconSize}px`; }),
-    `- Badge: height ${badge.height}px; font ${badge.fontSize}px; horizontal padding ${spacingReference(badge.paddingXToken!)}; radius ${badge.radius}px`,
+    ...buttonSizeOrder.map(size => { const button = getButtonSize(ds, size); return `  - ${size}: height ${button.height}px; font ${button.fontSize}px/${button.fontWeight}; padding ${binding(`foundation.buttonSizes.${size}.paddingY`, spacingReference(button.paddingYToken!))} ${binding(`foundation.buttonSizes.${size}.paddingX`, spacingReference(button.paddingXToken!))}; icon padding left/right ${binding(`foundation.buttonSizes.${size}.iconPaddingLeft`, spacingReference(button.iconPaddingLeftToken!))}/${binding(`foundation.buttonSizes.${size}.iconPaddingRight`, spacingReference(button.iconPaddingRightToken!))}; icon gap ${binding(`foundation.buttonSizes.${size}.iconGap`, spacingReference(button.iconGapToken!))}; icon size ${button.iconSize}px`; }),
+    `- Badge: height ${badge.height}px; font ${badge.fontSize}px; horizontal padding ${binding("foundation.badge.paddingX", spacingReference(badge.paddingXToken!))}; radius ${badge.radius}px`,
     "",
     "## 04. COMPONENT LIBRARY",
     "### Foundation",

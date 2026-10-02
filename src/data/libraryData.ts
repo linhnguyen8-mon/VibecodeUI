@@ -86,6 +86,7 @@ export const designSystems: DesignSystem[] = [
       { name: "radius.card", category: "radius", value: "24px" },
       { name: "shadow.card", category: "shadow", value: "0 4px 0 #C9EDFF" },
       { name: "shadow.button.primary", category: "shadow", value: "0 4px 0 #3E8CB2" },
+      { name: "control.height.md", category: "spacing", value: "52px" },
       { name: "radius.button", category: "radius", value: "16px" },
       { name: "spacing.button.padding-x", category: "spacing", value: "24px" },
       { name: "spacing.button.padding-y", category: "spacing", value: "14px" },

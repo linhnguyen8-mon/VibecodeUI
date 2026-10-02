@@ -6,6 +6,10 @@ import { buttonSizeOrder, getButtonSize } from "./lib/button";
 import { getTypography, typeRoles } from "./lib/typography";
 import { brandScales, functionalScales, neutralScaleForSystem, tokenValue } from "./lib/tokens";
 import { gradientPresetStyle } from "./lib/gradient";
+import { BadgeAnatomy } from "./BadgeAnatomy";
+import { GalleryBadge } from "./GalleryBadge";
+import { GalleryButton } from "./GalleryButton";
+import { ButtonAnatomy } from "./ButtonAnatomy";
 import { ElevoScreen } from "./ElevoScreens";
 import { getSpacingAliases, getSpacingScale, semanticSpacingColors } from "./lib/spacing";
 import "./component-gallery.css";
@@ -23,9 +27,6 @@ function Section({ title, meta, children }: { title: string; meta: string; child
   return <section className="eg-section"><header><h3>{title}</h3><span>{meta}</span></header>{children}</section>;
 }
 
-function GalleryButton({ children, variant = "primary", className = "", ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string }) {
-  return <button type="button" {...props} className={`eg-button eg-${variant} ${className}`}>{children}</button>;
-}
 
 function ElevoComponentAssets({ onAction }: { onAction: (message: string) => void }) {
   const [choice, setChoice] = useState("Cars");
@@ -48,23 +49,22 @@ function SpacingPreview({ ds, variant }: { ds: DesignSystem; variant: "form-shel
   ] as const;
   const shownEntries = variant === "form-shell" ? entries.slice(0, 2) : variant === "form" ? entries.slice(2) : entries;
   return <div className={`eg-spacing-markers eg-spacing-markers-${variant}`} aria-label="Semantic spacing measurements">{shownEntries.map(([label, key]) => {
-    const value = scale[aliases[key]];
+    const tokenNames = { pageMargin: 'page.margin', containerPadding: 'container.padding', sectionGap: 'section.gap', componentGap: 'component.gap', cardPadding: 'card.padding', elementGap: 'element.gap' };
+    const value = ds.tokenModelVersion ? parseFloat(tokenValue(ds,`spacing.${tokenNames[key]}`)) : scale[aliases[key]];
     return <span className={`eg-spacing-marker eg-spacing-marker-${key}`} key={key} title={`${label}: ${aliases[key]} · ${value}px`} style={{ "--spacing-marker-color": semanticSpacingColors[key], "--spacing-marker-size": `${value}px` } as CSSProperties}><span>{aliases[key]}</span><small>{value}px</small></span>;
   })}</div>;
 }
 
-export function ComponentGallery({ ds, buttonSize, onButtonSizeChange, previewCategory, onPreviewCategoryChange }: { ds: DesignSystem; buttonSize: ButtonSize; onButtonSizeChange: (size: ButtonSize) => void; previewCategory: PreviewCategory; onPreviewCategoryChange: (category: PreviewCategory) => void }) {
+export function ComponentGallery({ ds, buttonSize, onButtonSizeChange, previewCategory }: { ds: DesignSystem; buttonSize: ButtonSize; onButtonSizeChange: (size: ButtonSize) => void; previewCategory: PreviewCategory }) {
   const isElevoPreset = ds.id === "ds-learning-bright";
   const buttonVariants = isElevoPreset ? ["Primary", "Secondary", "Outline", "Correct", "Wrong"] : ds.tokens.some(token => token.name === "color.brand.tertiary") ? ["Primary", "Secondary", "Tertiary", ...variants.slice(2)] : variants;
   const buttonMetrics = getButtonSize(ds, buttonSize);
-  // Elevo's M button keeps the 52px touch target and raised treatment specified by its linked Figma component sheet; other presets use shared button size tokens.
-  const useFigmaButtonMetrics = isElevoPreset && buttonSize === "M";
   const elevoButtonStyle = {
-    "--el-button-height": `${useFigmaButtonMetrics ? 52 : buttonMetrics.height}px`,
-    "--el-button-font-size": `${useFigmaButtonMetrics ? tokenValue(ds, "typography.button.font-size", "16px") : `${buttonMetrics.fontSize}px`}`,
-    "--el-button-font-weight": `${useFigmaButtonMetrics ? tokenValue(ds, "typography.button.font-weight", "800") : buttonMetrics.fontWeight}`,
-    "--el-button-padding-x": `${useFigmaButtonMetrics ? tokenValue(ds, "spacing.button.padding-x", "24px") : `${buttonMetrics.paddingX}px`}`,
-    "--el-button-padding-y": `${useFigmaButtonMetrics ? tokenValue(ds, "spacing.button.padding-y", "14px") : `${buttonMetrics.paddingY}px`}`,
+    "--el-button-height": `${buttonMetrics.height}px`,
+    "--el-button-font-size": `${`${buttonMetrics.fontSize}px`}`,
+    "--el-button-font-weight": `${buttonMetrics.fontWeight}`,
+    "--el-button-padding-x": `${`${buttonMetrics.paddingX}px`}`,
+    "--el-button-padding-y": `${`${buttonMetrics.paddingY}px`}`,
   } as CSSProperties;
   const typography = getTypography(ds);
   const [notice, setNotice] = useState("");
@@ -118,7 +118,7 @@ export function ComponentGallery({ ds, buttonSize, onButtonSizeChange, previewCa
     window.setTimeout(() => setCopiedColor(current => current === value ? "" : current), 1600);
   };
   const confirm = () => { dialog.current?.close(); setNotice(`Đã chọn gói ${plan === "starter" ? "Starter" : "Pro"}.`); };
-  return <div className={`elevo-gallery ${isElevoPreset ? "elevo-learning-gallery" : ""}`} aria-label={`${ds.name} component gallery`} style={{ "--button-height": `${useFigmaButtonMetrics ? "52px" : `${buttonMetrics.height}px`}`, "--button-font-size": useFigmaButtonMetrics ? tokenValue(ds, "typography.button.font-size", "16px") : `${buttonMetrics.fontSize}px`, "--button-font-weight": useFigmaButtonMetrics ? tokenValue(ds, "typography.button.font-weight", "800") : `${buttonMetrics.fontWeight}`, "--button-shadow": tokenValue(ds, "shadow.button.primary", "0 4px 0 #3E8CB2"), "--button-correct": tokenValue(ds, "color.button.correct", "#34C759"), "--button-correct-text": tokenValue(ds, "color.button.correct.text", "#F0FFF4"), "--button-correct-shadow": tokenValue(ds, "shadow.button.correct", "0 4px 0 #217E38"), "--button-incorrect": tokenValue(ds, "color.button.incorrect", "#E04A4A"), "--button-incorrect-text": tokenValue(ds, "color.button.incorrect.text", "#FFF0F0"), "--button-incorrect-shadow": tokenValue(ds, "shadow.button.incorrect", "0 4px 0 #A51C1C"), "--button-radius": tokenValue(ds, "radius.button", "16px"), "--button-padding-x": useFigmaButtonMetrics ? tokenValue(ds, "spacing.button.padding-x", "24px") : `${buttonMetrics.paddingX}px`, "--button-padding-y": useFigmaButtonMetrics ? tokenValue(ds, "spacing.button.padding-y", "14px") : `${buttonMetrics.paddingY}px` } as CSSProperties}>
+  return <div className={`elevo-gallery ${isElevoPreset ? "elevo-learning-gallery" : ""}`} aria-label={`${ds.name} component gallery`} style={{ "--button-height": `${`${buttonMetrics.height}px`}`, "--button-font-size": `${buttonMetrics.fontSize}px`, "--button-font-weight": `${buttonMetrics.fontWeight}`, "--button-shadow": tokenValue(ds, "shadow.button.primary", "0 4px 0 #3E8CB2"), "--button-correct": tokenValue(ds, "color.button.correct", "#34C759"), "--button-correct-text": tokenValue(ds, "color.button.correct.text", "#F0FFF4"), "--button-correct-shadow": tokenValue(ds, "shadow.button.correct", "0 4px 0 #217E38"), "--button-incorrect": tokenValue(ds, "color.button.incorrect", "#E04A4A"), "--button-incorrect-text": tokenValue(ds, "color.button.incorrect.text", "#FFF0F0"), "--button-incorrect-shadow": tokenValue(ds, "shadow.button.incorrect", "0 4px 0 #A51C1C"), "--button-radius": tokenValue(ds, "radius.button", "16px"), "--button-padding-x": `${buttonMetrics.paddingX}px`, "--button-padding-y": `${buttonMetrics.paddingY}px` } as CSSProperties}>
     {previewCategory === "foundation" && <>
     <Section title="0. Background modes" meta="Page / Surface">
       <div className="eg-background-modes">
@@ -145,6 +145,7 @@ export function ComponentGallery({ ds, buttonSize, onButtonSizeChange, previewCa
     <Section title="Elevation & Shadows" meta="5 levels"><div className="eg-elevations">{[["L0 · Flat", "Element phẳng", "Nền / divider / item không nổi"], ["L1 · Low", "Card mặc định", "Card và vùng nội dung tương tác"], ["L2 · Medium", "Hover / Selected", "Nhấn mạnh tương tác hoặc được chọn"], ["L3 · High", "Dropdown / Popover", "Menu ngữ cảnh và nội dung phụ"], ["L4 · Overlay", "Modal / Dialog", "Lớp phủ toàn cục, cần nổi bật"]].map(([level, label, detail], index) => <article key={level}><div className={`eg-elevation-${index}`}>{level}</div><strong>{label}</strong><small>{detail}</small></article>)}</div></Section>
     </>}
     {previewCategory === "component" && <>
+    <ButtonAnatomy ds={ds} />
     {isElevoPreset && <Section title="0. Elevo component assets" meta="Reusable states">
       <ElevoComponentAssets onAction={setNotice} />
     </Section>}
@@ -156,7 +157,7 @@ export function ComponentGallery({ ds, buttonSize, onButtonSizeChange, previewCa
       <output className="eg-notice" aria-live="polite">{notice}</output>
     </Section>
 
-    <Section title="2. Badges & Status" meta="Atoms"><div className="eg-row eg-badges"><span className="eg-badge eg-primary">Default</span><span className="eg-badge eg-secondary">Secondary</span><span className="eg-badge eg-outline">Outline</span><span className="eg-badge eg-success-soft">• Success</span><span className="eg-badge eg-warning-soft">Warning</span><span className="eg-badge eg-danger-soft">Destructive</span></div></Section>
+    <Section title="2. Badges & Status" meta="Atoms"><BadgeAnatomy ds={ds} /><div className="eg-row eg-badges"><GalleryBadge variant="primary">Default</GalleryBadge><GalleryBadge variant="secondary">Secondary</GalleryBadge><GalleryBadge variant="outline">Outline</GalleryBadge><GalleryBadge variant="success-soft">• Success</GalleryBadge><GalleryBadge variant="warning-soft">Warning</GalleryBadge><GalleryBadge variant="danger-soft">Destructive</GalleryBadge></div></Section>
 
     <Section title="3. Inputs" meta="Forms">
       <div className="eg-form-canvas" aria-label="Form background token hierarchy">
@@ -201,10 +202,7 @@ export function ComponentGallery({ ds, buttonSize, onButtonSizeChange, previewCa
     </Section>}
     {ds.id !== "ds-learning-bright" && <Section title="7. Templates ứng dụng mobile" meta="375 × 816 px"><div className="eg-phones">{["Mobile login", "Home", "Settings", "Content", "Chat / Bot"].map((title, i) => <div key={title}><MobileScreen screen={i} /><div className="eg-phone-caption">{title}</div></div>)}</div></Section>}
     </>}
-    <div className="preview-category-float" role="tablist" aria-label="Preview category">
-      <button type="button" role="tab" aria-selected={previewCategory === "foundation"} onClick={() => onPreviewCategoryChange("foundation")}>Foundation</button>
-      <button type="button" role="tab" aria-selected={previewCategory === "component"} onClick={() => onPreviewCategoryChange("component")}>Component</button>
-    </div>
+
   </div>;
 }
 

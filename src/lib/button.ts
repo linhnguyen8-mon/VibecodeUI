@@ -1,3 +1,4 @@
+import { resolveTokenGraph } from "./tokenGraph";
 import type { ButtonSize, ButtonSizeConfig, DesignSystem } from "../types";
 import { spacingValue } from "./spacing";
 
@@ -11,12 +12,16 @@ export const defaultButtonSizes: Record<ButtonSize, ButtonSizeConfig> = {
 
 export function getButtonSize(ds: DesignSystem, size: ButtonSize): ButtonSizeConfig {
   const button = { ...defaultButtonSizes[size], ...ds.foundations.buttonSizes?.[size] };
+  const values = ds.tokenModelVersion === 1 ? resolveTokenGraph(ds.tokens) : new Map<string,string>();
   return {
     ...button,
+    ...(size === 'M' && !ds.tokenModelVersion && ds.tokens.some(t => t.name === 'control.height.md') ? Object.fromEntries([['height','control.height.md'],['fontSize','typography.button.font-size'],['fontWeight','typography.button.font-weight']].filter(([,name]) => ds.tokens.some(t => t.name === name)).map(([key,name]) => [key,parseFloat(ds.tokens.find(t => t.name === name)!.value)])) : {}),
     paddingX: spacingValue(ds, button.paddingXToken!),
     paddingY: spacingValue(ds, button.paddingYToken!),
     iconPaddingLeft: spacingValue(ds, button.iconPaddingLeftToken!),
     iconPaddingRight: spacingValue(ds, button.iconPaddingRightToken!),
     iconGap: spacingValue(ds, button.iconGapToken!),
+    ...(size === 'M' && !ds.tokenModelVersion ? Object.fromEntries([['paddingX','spacing.button.padding-x'],['paddingY','spacing.button.padding-y']].filter(([,name]) => ds.tokens.some(t => t.name === name)).map(([key,name]) => [key,parseFloat(ds.tokens.find(t => t.name === name)!.value)])) : {}),
+    ...Object.fromEntries(["paddingX","paddingY","iconPaddingLeft","iconPaddingRight","iconGap"].filter(key => values.has(`foundation.buttonSizes.${size}.${key}`)).map(key => [key,parseFloat(values.get(`foundation.buttonSizes.${size}.${key}`)!)])),
   };
 }

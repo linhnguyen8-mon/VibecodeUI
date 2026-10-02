@@ -1,0 +1,24 @@
+.button-anatomy{border:1px solid var(--app-border);border-radius:10px;margin-bottom:32px;background:var(--surface);color:var(--text);font-family:var(--app-font-family,Inter,sans-serif)}
+.button-anatomy>header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--app-border)}
+.button-anatomy h3{margin:0;font-size:16px}.button-anatomy>header>span{font-size:12px;color:var(--text-secondary)}
+.button-anatomy-stage{position:relative;display:flex;align-items:center;justify-content:center;height:270px;min-width:340px;overflow:visible}
+.button-anatomy-specimen{font-family:var(--font-family),sans-serif}
+.button-anatomy-measures{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;color:var(--app-muted)}
+.button-anatomy-measures path{stroke:currentColor;stroke-width:1}.button-anatomy-measures text{font:10px Inter,sans-serif;fill:currentColor;paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round}
+.button-anatomy-measures .is-active{color:var(--brand)}.button-anatomy-measures .is-active path{stroke-width:2}
+.button-anatomy-measures .part-outline{fill:none;stroke:transparent}.button-anatomy-measures .part-active{fill:color-mix(in srgb,var(--brand) 12%,transparent);stroke:var(--brand);stroke-width:2}.button-anatomy-measures .anatomy-marker{fill:var(--brand);font-weight:700}
+.button-anatomy-table{overflow:auto;border-top:1px solid var(--app-border)}.button-anatomy-table table{width:100%;min-width:640px;border-collapse:collapse;text-align:left;font-size:12px}.button-anatomy-table caption{text-align:left;padding:14px 20px;font-weight:600}.button-anatomy-table th,.button-anatomy-table td{padding:10px 14px;border-top:1px solid var(--app-border);vertical-align:top}.button-anatomy-table thead{background:var(--app-subtle)}.button-anatomy-table tbody th{white-space:nowrap;font-weight:600}.button-anatomy-table td:nth-child(3){max-width:240px;overflow-wrap:anywhere}.button-anatomy-table code{font:11px ui-monospace,monospace;overflow-wrap:anywhere}.button-anatomy-table tr.is-active{background:var(--app-brand-soft)}.button-anatomy-table tr:focus-visible{outline:2px solid var(--brand);outline-offset:-2px}
+@media(max-width:500px){.button-anatomy{overflow:auto}.button-anatomy-stage{height:270px}}
+
+.button-anatomy-controls{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--app-border);font-size:12px;background:var(--app-subtle)}
+.button-anatomy-controls label{display:flex;align-items:center;gap:6px}.button-anatomy-controls select{padding:5px 8px;border:1px solid var(--app-border);border-radius:5px;background:var(--app-surface);color:var(--app-text);font:inherit}.button-anatomy-controls input{accent-color:var(--app-brand)}
+.button-anatomy>header>span{text-transform:capitalize}
+
+.button-anatomy-stage{height:230px}
+@media(max-width:500px){.button-anatomy-stage{height:230px}}
+
+.button-inspection-legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 20px;border-bottom:1px solid var(--app-border);font-size:11px;font-weight:600}.button-inspection-legend>span:before{content:'';display:inline-block;width:8px;height:8px;border-radius:3px;background:currentColor;margin-right:5px}.button-inspection-legend small{margin-left:auto;color:var(--app-muted);font-weight:400}
+.button-anatomy-stage{height:370px;min-width:450px}.button-anatomy-specimen{display:inline-flex;transform:scale(2);transform-origin:center}
+.button-anatomy-measures .inspection-zone{fill:currentColor;fill-opacity:.14;stroke:currentColor;stroke-width:1;stroke-dasharray:3 3}.button-anatomy-measures .inspection-zone.is-active{fill-opacity:.28;stroke-width:2}
+.button-anatomy-measures .inspection-pill text{fill:white;stroke:none;font-size:11px;font-weight:700}.button-anatomy-measures .inspection-ruler path{stroke:currentColor;stroke-width:1}.button-anatomy-measures .inspection-radius path{stroke:currentColor;stroke-width:2;stroke-dasharray:3 3;fill:none}
+@media(max-width:500px){.button-anatomy-stage{height:370px}}

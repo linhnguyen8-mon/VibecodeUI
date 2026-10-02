@@ -1,3 +1,4 @@
+import { resolveTokenGraph } from "./tokenGraph";
 import type { ComponentLayout, DesignSystem, ElevationLevel } from "../types";
 import { getSpacingAliases, spacingValue } from "./spacing";
 
@@ -21,6 +22,7 @@ export const elevationLabels = ["Flat", "Low", "Medium", "High", "Overlay"];
 
 export function getLayout(ds: DesignSystem): ComponentLayout {
   const spacing = getSpacingAliases(ds);
+  const values = ds.tokenModelVersion === 1 ? resolveTokenGraph(ds.tokens) : new Map<string,string>();
   return {
     ...defaultLayout,
     controlRadius: ds.foundations.radiusScale[1] ?? defaultLayout.controlRadius,
@@ -29,6 +31,7 @@ export function getLayout(ds: DesignSystem): ComponentLayout {
     sectionGap: spacingValue(ds, spacing.sectionGap),
     componentGap: spacingValue(ds, spacing.componentGap),
     cardPadding: spacingValue(ds, spacing.cardPadding),
+    ...Object.fromEntries([["sectionGap","spacing.section.gap"],["componentGap","spacing.component.gap"],["cardPadding","spacing.card.padding"],["controlRadius","radius.control"],["cardRadius","radius.card"]].filter(([,name]) => values.has(name)).map(([key,name]) => [key, parseFloat(values.get(name)!)])),
   };
 }
 

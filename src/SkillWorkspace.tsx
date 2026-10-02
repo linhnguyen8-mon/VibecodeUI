@@ -93,7 +93,7 @@ function SkillCard({ skill, selected, onClick }: { skill: Skill; selected: boole
   </button>;
 }
 
-function Inspector({ reviews, onReviewChange, skill, values, onInputChange, onResetInputs, onToast }: { reviews: Record<string, CriterionReview>; onReviewChange: (title: string, patch: Partial<CriterionReview>) => void; skill: Skill; values: Record<string, string | string[]>; includedCriteria: Record<string, boolean>; onCriterionToggle: (title: string) => void; onToast: (toast: ToastMessage) => void }) {
+function Inspector({ reviews, onReviewChange, skill, values, onToast }: { reviews: Record<string, CriterionReview>; onReviewChange: (title: string, patch: Partial<CriterionReview>) => void; skill: Skill; values: Record<string, string | string[]>; includedCriteria: Record<string, boolean>; onCriterionToggle: (title: string) => void; onToast: (toast: ToastMessage) => void }) {
   const t = useTranslate();
   const [copied, setCopied] = useState<"prompt" | "criteria" | null>(null);
   const [editingCriteria, setEditingCriteria] = useState<Record<string, boolean>>({});

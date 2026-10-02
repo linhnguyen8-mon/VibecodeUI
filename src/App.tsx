@@ -1,12 +1,20 @@
+import { normalizeDesignSystem, type TokenGroup } from "./lib/designTokens";
+import { appThemeColors } from "./lib/appTheme";
+import { TokenTable } from "./TokenTable";
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import {
   Boxes,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Activity,
+  BookOpen,
+  PanelsTopLeft,
+  Braces,
   Clipboard,
   ChevronLeft,
   ChevronRight,
   Download,
-  Search,
   Sparkles,
 } from "lucide-react";
 import { loadMockLibraryData } from "./data/libraryData";
@@ -35,12 +43,14 @@ type Toast = { tone: "success" | "error" | "info"; text: string } | null;
 const data = loadMockLibraryData();
 
 export function App() {
+  const [navExpanded, setNavExpanded] = useState(false);
   const [view, setView] = useState<View>("design-system");
   const [loadedState] = useState(loadDesignQualityState);
   const [qualityState, setQualityState] = useState<DesignQualityState>(loadedState.state);
   const [storageWarning, setStorageWarning] = useState(loadedState.warning ?? "");
-  const [query, setQuery] = useState(loadedState.state.filters.query);
+  const [query, setQuery] = useState("");
   const [toast, setToast] = useState<Toast>(null);
+  const [drafts, setDrafts] = useState<Record<string, DesignSystem>>({});
   const [selectedDsId, setSelectedDsId] = useState("ds-fintech-calm");
   const [selectedComponentId, setSelectedComponentId] = useState("component-primary-button");
 
@@ -57,38 +67,34 @@ export function App() {
   }, [query]);
 
 
+  const themeDs = normalizeDesignSystem(drafts[selectedDsId] ?? data.designSystems.find(ds => ds.id === selectedDsId) ?? data.designSystems[0]);
   return (
-    <div className="app-shell">
-      <header className="app-header">
-        <div className="topbar">
+    <div style={appThemeColors(themeDs)} className={`app-shell app-with-sidenav ${navExpanded ? "nav-expanded" : "nav-collapsed"}`}>
+      <aside className="app-sidenav" aria-label="Main navigation">
           <div className="brand">
             <span className="brand-mark">+</span>
             <strong>Design system</strong>
             <span className="version-chip">v2.4.0</span>
           </div>
-          {view !== "animation" && <label className="search-box">
-            <Search size={18} />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={view === "principle" ? "Search skills..." : "Tìm kiếm design system, animation..."} />
-          </label>}
-          <span className="avatar-chip">DS</span>
-        </div>
-        <nav className="nav-list" role="tablist" aria-label="Library sections">
-          <NavButton active={view === "design-system"} onClick={() => setView("design-system")}>
+        <nav className="nav-list" role="group" aria-label="Library sections">
+          <NavButton icon={<Boxes size={20} />} active={view === "design-system"} onClick={() => setView("design-system")}>
             Design Systems
           </NavButton>
-          <NavButton active={view === "animation"} onClick={() => setView("animation")}>
+          <NavButton icon={<Activity size={20} />} active={view === "animation"} onClick={() => setView("animation")}>
             Motion
           </NavButton>
-          <NavButton active={view === "principle"} onClick={() => setView("principle")}>
+          <NavButton icon={<BookOpen size={20} />} active={view === "principle"} onClick={() => setView("principle")}>
             Design Principles
           </NavButton>
         </nav>
-      </header>
-
+        <button className="nav-collapse-toggle" type="button" aria-expanded={navExpanded} aria-label={navExpanded ? "Collapse navigation" : "Expand navigation"} title={navExpanded ? "Collapse navigation" : "Expand navigation"} onClick={() => setNavExpanded(expanded => !expanded)}>{navExpanded ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}<span>{navExpanded ? "Collapse" : "Expand"}</span></button>
+      </aside>
       <main className="workspace">
 
         {view === "design-system" && (
           <DesignSystemsPage
+            drafts={drafts}
+            onDraftChange={next => setDrafts(previous => ({ ...previous, [next.id]: next }))}
             query={query}
             selectedId={selectedDsId}
             onSelect={setSelectedDsId}
@@ -116,28 +122,34 @@ export function App() {
 
 function NavButton({
   active,
+  icon,
   children,
   disabled,
   onClick,
 }: {
   active?: boolean;
   children: string;
+  icon: ReactNode;
   disabled?: boolean;
   onClick?: () => void;
 }) {
   return (
-    <button className={active ? "nav-button active" : "nav-button"} role="tab" aria-selected={active} tabIndex={active ? 0 : -1} disabled={disabled} onClick={onClick}>
-      <span>{children}</span>
+    <button className={active ? "nav-button active" : "nav-button"} aria-current={active ? "page" : undefined} aria-label={children} title={children} disabled={disabled} onClick={onClick}>
+      {icon}<span>{children}</span>
     </button>
   );
 }
 
 function DesignSystemsPage({
+  drafts,
+  onDraftChange,
   query,
   selectedId,
   onSelect,
   onToast,
 }: {
+  drafts: Record<string, DesignSystem>;
+  onDraftChange: (next: DesignSystem) => void;
   query: string;
   selectedId: string;
   onSelect: (id: string) => void;
@@ -145,15 +157,16 @@ function DesignSystemsPage({
 }) {
   const filtered = searchResources(data, query, ["design-system"]).filter((item): item is DesignSystem => item.type === "design-system");
   const seedDs = filtered.find((ds) => ds.id === selectedId) ?? filtered[0] ?? data.designSystems.find((ds) => ds.id === selectedId) ?? data.designSystems[0];
-  const [drafts, setDrafts] = useState<Record<string, DesignSystem>>({});
   const [buttonSize, setButtonSize] = useState<ButtonSize>("M");
   const [previewCategory, setPreviewCategory] = useState<PreviewCategory>("foundation");
   const presetViewport = useRef<HTMLDivElement>(null);
   const [presetOverflow, setPresetOverflow] = useState(false);
   const [presetAtStart, setPresetAtStart] = useState(true);
   const [presetAtEnd, setPresetAtEnd] = useState(false);
-  const workingDs = drafts[seedDs.id] ?? seedDs;
-  const setWorkingDs = (next: DesignSystem) => setDrafts(previous => ({ ...previous, [next.id]: next }));
+  const [editorView, setEditorView] = useState<"preview" | "tokens">("preview");
+  const [tokenGroup, setTokenGroup] = useState<TokenGroup | "All">("All");
+  const workingDs = normalizeDesignSystem(drafts[seedDs.id] ?? seedDs);
+  const setWorkingDs = onDraftChange;
   useEffect(() => {
     const viewport = presetViewport.current;
     if (!viewport) return;
@@ -172,7 +185,7 @@ function DesignSystemsPage({
   const scrollPresets = (direction: -1 | 1) => presetViewport.current?.scrollBy({ left: direction * 240, behavior: "smooth" });
 
   return (
-    <section className="page-grid ds-grid">
+    <section className={`page-grid ds-grid ${editorView === "tokens" ? "ds-tokens-view" : "ds-ui-view"}`}>
       <div className="content-pane">
         <div className="ds-preset-carousel">
           {presetOverflow && <button className="ds-preset-scroll" type="button" aria-label="Cuộn preset sang trái" disabled={presetAtStart} onClick={() => scrollPresets(-1)}><ChevronLeft size={16} /></button>}
@@ -191,13 +204,20 @@ function DesignSystemsPage({
             </div>
           </div>
           {presetOverflow && <button className="ds-preset-scroll" type="button" aria-label="Cuộn preset sang phải" disabled={presetAtEnd} onClick={() => scrollPresets(1)}><ChevronRight size={16} /></button>}
+          <div className="ds-main-tabs" role="group" aria-label="Design system view">
+            <div className="ds-ui-view-group" role="group" aria-label="UI preview">
+              <button type="button" aria-pressed={editorView === "preview"} onClick={() => setEditorView("preview")}><PanelsTopLeft size={15} aria-hidden="true" />UI</button>
+
+            </div>
+            <button type="button" aria-pressed={editorView === "tokens"} onClick={() => setEditorView("tokens")}><Braces size={15} aria-hidden="true" />Tokens</button>
+          </div>
         </div>
       </div>
-      <aside className="color-output-pane">
-        <DesignSystemSidebar key={workingDs.id} ds={workingDs} onChange={setWorkingDs} buttonSize={buttonSize} onButtonSizeChange={setButtonSize} previewCategory={previewCategory} />
+      <aside className="color-output-pane" aria-hidden={editorView === "tokens"} inert={editorView === "tokens"}>
+        <DesignSystemSidebar key={workingDs.id} ds={workingDs} onChange={setWorkingDs} onViewTokens={group => { setTokenGroup(group); setEditorView("tokens"); }} />
         <PromptBox title="Generated AI Prompt" value={createDesignSystemPrompt(workingDs)} onToast={onToast} filename={`${workingDs.id}-prompt`} />
       </aside>
-      <div className="preview-pane"><DesignSystemPreview ds={workingDs} buttonSize={buttonSize} onButtonSizeChange={setButtonSize} previewCategory={previewCategory} onPreviewCategoryChange={setPreviewCategory} /></div>
+      <div className="preview-pane">{editorView === "tokens" ? <TokenTable key={workingDs.id} ds={workingDs} onChange={setWorkingDs} group={tokenGroup} onGroupChange={setTokenGroup} /> : <><div className="ds-ui-canvas"><DesignSystemPreview ds={workingDs} buttonSize={buttonSize} onButtonSizeChange={setButtonSize} previewCategory={previewCategory} onPreviewCategoryChange={setPreviewCategory} /></div></>}</div>
     </section>
   );
 }
@@ -245,6 +265,10 @@ function DesignSystemPreview({ ds, buttonSize, onButtonSizeChange, previewCatego
         "--gradient-angle": `${ds.foundations.background?.gradientAngle ?? 135}deg`,
         "--surface-elevated": tokenValue(ds, "color.surface.elevated"),
         "--surface-tertiary": tokenValue(ds, "color.surface.tertiary"),
+        "--input-default": tokenValue(ds, "color.input.default"),
+        "--input-selected": tokenValue(ds, "color.input.selected"),
+        "--input-hover": tokenValue(ds, "color.input.hover"),
+        "--input-disabled": tokenValue(ds, "color.input.disabled"),
         "--text": text,
         "--content-text": text,
         "--text-secondary": tokenValue(ds, "color.text.secondary"),
@@ -259,6 +283,7 @@ function DesignSystemPreview({ ds, buttonSize, onButtonSizeChange, previewCatego
         "--border-hover": tokenValue(ds, "color.border.hover"),
         "--border-focus": tokenValue(ds, "color.border.focus"),
         "--border-width": `${ds.foundations.border?.enabled ? ds.foundations.border.width : 0}px`,
+        "--interactive-default": tokenValue(ds, "color.interactive.default"),
         "--interactive-hover": tokenValue(ds, "color.interactive.hover"),
         "--interactive-active": tokenValue(ds, "color.interactive.active"),
         "--interactive-focus": tokenValue(ds, "color.interactive.focus"),
@@ -272,7 +297,7 @@ function DesignSystemPreview({ ds, buttonSize, onButtonSizeChange, previewCatego
         "--layout-control-radius": `${layout.controlRadius}px`,
         "--layout-card-radius": `${layout.cardRadius}px`,
         "--elevation-0": elevationCss(elevation[0]),
-        "--elevation-1": elevationCss(elevation[1]),
+        "--elevation-1": tokenValue(ds, "shadow.card", elevationCss(elevation[1])),
         "--elevation-2": elevationCss(elevation[2]),
         "--elevation-3": elevationCss(elevation[3]),
         "--elevation-4": elevationCss(elevation[4]),
@@ -304,15 +329,15 @@ function DesignSystemPreview({ ds, buttonSize, onButtonSizeChange, previewCatego
         "--spacing-4xl": `${spacingScale["4XL"]}px`,
         "--spacing-5xl": `${spacingScale["5XL"]}px`,
         "--spacing-6xl": `${spacingScale["6XL"]}px`,
-        "--spacing-page-margin": `${spacingScale[spacingAliases.pageMargin]}px`,
-        "--spacing-container-padding": `${spacingScale[spacingAliases.containerPadding]}px`,
-        "--spacing-section-gap": `${spacingScale[spacingAliases.sectionGap]}px`,
-        "--spacing-component-gap": `${spacingScale[spacingAliases.componentGap]}px`,
-        "--spacing-card-padding": `${spacingScale[spacingAliases.cardPadding]}px`,
-        "--spacing-element-gap": `${spacingScale[spacingAliases.elementGap]}px`,
+        "--spacing-page-margin": tokenValue(ds, "spacing.page.margin"),
+        "--spacing-container-padding": tokenValue(ds, "spacing.container.padding"),
+        "--spacing-section-gap": tokenValue(ds, "spacing.section.gap"),
+        "--spacing-component-gap": tokenValue(ds, "spacing.component.gap"),
+        "--spacing-card-padding": tokenValue(ds, "spacing.card.padding"),
+        "--spacing-element-gap": tokenValue(ds, "spacing.element.gap"),
         "--radius-small": `${ds.foundations.radiusScale[0] ?? 4}px`,
-        "--radius-control": `${ds.foundations.radiusScale[1] ?? layout.controlRadius}px`,
-        "--radius-surface": `${ds.foundations.radiusScale[2] ?? layout.cardRadius}px`,
+        "--radius-control": `${layout.controlRadius}px`,
+        "--radius-surface": `${layout.cardRadius}px`,
         "--radius-overlay": `${ds.foundations.radiusScale[3] ?? layout.cardRadius}px`,
         "--radius-pill": `${Math.max(...ds.foundations.radiusScale, layout.cardRadius)}px`,
         "--density": compact ? .72 : ds.foundations.density === "spacious" ? 1.28 : 1,
@@ -323,7 +348,8 @@ function DesignSystemPreview({ ds, buttonSize, onButtonSizeChange, previewCatego
         "--info": tokenValue(ds, "color.status.info"),
       } as CSSProperties}
     >
-      <ComponentGallery key={ds.id} ds={ds} buttonSize={buttonSize} onButtonSizeChange={onButtonSizeChange} previewCategory={previewCategory} onPreviewCategoryChange={onPreviewCategoryChange} />
+      <nav className="ds-canvas-tabs" aria-label="UI preview category">{(["foundation", "component"] as const).map(category => <button type="button" key={category} aria-pressed={previewCategory === category} onClick={() => onPreviewCategoryChange(category)}>{category === "foundation" ? "Foundation" : "Component"}</button>)}</nav>
+      <ComponentGallery key={ds.id} ds={ds} buttonSize={buttonSize} onButtonSizeChange={onButtonSizeChange} previewCategory={previewCategory} />
     </div>
   );
 }

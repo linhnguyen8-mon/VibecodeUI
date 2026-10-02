@@ -6,6 +6,12 @@ export interface DesignToken {
   name: string;
   category: "color" | "spacing" | "radius" | "shadow" | "typography";
   value: string;
+  /** Optional local replacement; value remains the source to restore. */
+  override?: string;
+  valueKind?: "number" | "color" | "string" | "boolean";
+  unit?: string;
+  /** Alpha multiplier applied to the referenced color, unless locally overridden. */
+  opacity?: number;
 }
 
 export interface ComponentLayout {
@@ -123,6 +129,7 @@ export interface DesignSystem {
     buttonSizes?: Record<ButtonSize, ButtonSizeConfig>;
     badge?: BadgeConfig;
   };
+  tokenModelVersion?: 1;
   tokens: DesignToken[];
   componentIds: string[];
   patternIds: string[];

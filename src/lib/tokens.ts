@@ -1,3 +1,4 @@
+import { resolveTokenGraph } from "./tokenGraph";
 import type { DesignSystem, DesignToken } from "../types";
 import { elevationCss, getElevation, getLayout } from "./layout";
 import { getSpacingAliases, getSpacingScale, spacingReference, spacingTokenNames } from "./spacing";
@@ -38,12 +39,12 @@ export function brandScales(ds: DesignSystem): Array<{ brand: string; shades: Ar
   return brands.map(brand => {
     const seed = tokenValue(ds, `color.brand.${brand}`, brand === "primary" ? "#2457C5" : "#0891B2");
     const scale = brandScale(seed);
-    return { brand, shades: brandShadeSteps.map((step, index) => ({ step, value: scale[index] })) };
+    return { brand, shades: brandShadeSteps.map((step, index) => ({ step, value: ds.tokenModelVersion === 1 ? tokenValue(ds, `color.brand.${brand}.${step}`, scale[index]) : scale[index] })) };
   });
 }
 
 export function neutralScaleForSystem(ds: DesignSystem): Array<{ step: number; value: string }> {
-  return neutralScale(tokenValue(ds, "color.neutral.base", "#64748B"));
+  return neutralScale(tokenValue(ds, "color.neutral.base", "#64748B")).map(item => ({ ...item, value: ds.tokenModelVersion === 1 ? tokenValue(ds, `color.neutral.${item.step}`, item.value) : item.value }));
 }
 
 export function functionalScales(ds: DesignSystem): Array<{ brand: string; shades: Array<{ step: number; value: string }> }> {
@@ -85,6 +86,7 @@ function mixHex(first: string, second: string, firstWeight: number): string {
 }
 
 export function tokenValue(ds: DesignSystem, name: string, fallback?: string): string {
+  if (ds.tokenModelVersion === 1) { const value = resolveTokenGraph(ds.tokens).get(name); if (value !== undefined) return value; if (fallback !== undefined) return fallback; }
   if (name === "color.focus.ring") return tokenValue(ds, "color.brand.primary", "#2457C5");
   if (name === "color.interactive.default" || name === "color.interactive.focus") return tokenValue(ds, "color.brand.primary", "#2457C5");
   if (name === "color.interactive.hover") return mixHex(tokenValue(ds, "color.brand.primary", "#2457C5"), "#000000", 0.92);
@@ -117,6 +119,7 @@ export function tokenValue(ds: DesignSystem, name: string, fallback?: string): s
 }
 
 export function resolvedTokens(ds: DesignSystem): DesignToken[] {
+  if (ds.tokenModelVersion === 1) { const values = resolveTokenGraph(ds.tokens); return ds.tokens.map(token => ({ ...token, value: values.get(token.name)! })); }
   const layout = getLayout(ds);
   const elevation = getElevation(ds);
   const spacingScale = getSpacingScale(ds);
